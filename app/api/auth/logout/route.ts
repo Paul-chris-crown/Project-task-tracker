@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 
+// Prevent this route from being processed during build time
+export const dynamic = 'force-dynamic'
+
 export async function POST() {
   try {
     const cookieStore = cookies()

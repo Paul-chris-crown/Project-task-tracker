@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getCurrentUser } from '@/lib/auth'
 
+// Prevent this route from being processed during build time
+export const dynamic = 'force-dynamic'
+
 export async function GET() {
   try {
     const currentUser = await getCurrentUser()

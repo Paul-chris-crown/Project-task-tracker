@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { getCurrentUser } from '@/lib/auth'
+import { requireAuth } from '@/lib/auth'
 
+// Prevent this route from being processed during build time
+export const dynamic = 'force-dynamic'
 
 export async function POST(request: NextRequest) {
   try {
@@ -15,7 +17,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get the current authenticated user
-    const currentUser = await getCurrentUser()
+    const currentUser = await requireAuth()
     
     if (!currentUser) {
       return NextResponse.json(
