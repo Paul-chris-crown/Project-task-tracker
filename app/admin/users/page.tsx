@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -28,9 +28,9 @@ export default function AdminUsersPage() {
 
   useEffect(() => {
     fetchUsers()
-  }, [])
+  }, [fetchUsers])
 
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       setIsLoading(true)
       const response = await fetch('/api/admin/users')
@@ -48,7 +48,7 @@ export default function AdminUsersPage() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [toast])
 
   const addUser = async (e: React.FormEvent) => {
     e.preventDefault()
