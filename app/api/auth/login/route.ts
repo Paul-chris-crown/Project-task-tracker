@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
-import { prisma } from '@/lib/prisma'
-import bcrypt from 'bcryptjs'
 
 // Prevent this route from being processed during build time
 export const dynamic = 'force-dynamic'
@@ -35,69 +33,64 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Check if DATABASE_URL is available
-    if (!process.env.DATABASE_URL) {
-      console.error('DATABASE_URL environment variable is not set')
-      return NextResponse.json(
-        { error: 'Server configuration error: Database connection not configured' },
-        { status: 500 }
-      )
-    }
-
+    // Get allowed users from environment variable
+    const allowedUsersStr = process.env.ALLOWED_USERS || '[]'
+    let allowedUsers: Array<{ email: string; role: string }> = []
+    
     try {
-      // Check if email exists in allowed users list
-      const allowedUser = await prisma.allowedUser.findUnique({
-        where: { email: email.toLowerCase() }
-      })
+      allowedUsers = JSON.parse(allowedUsersStr)
+    } catch (error) {
+      console.error('Failed to parse ALLOWED_USERS:', error)
+      // Fallback to a default admin user if parsing fails
+      allowedUsers = [{ email: 'admin@example.com', role: 'ADMIN' }]
+    }
 
-      if (!allowedUser) {
-        return NextResponse.json(
-          { error: 'Email not authorized to access this application' },
-          { status: 403 }
-        )
-      }
+    // Check if email exists in allowed users list
+    const allowedUser = allowedUsers.find((user: { email: string; role: string }) => 
+      user.email.toLowerCase() === email.toLowerCase()
+    )
 
-      // Set secure cookie with user information
-      const cookieStore = cookies()
-      cookieStore.set('admin_auth', 'true', {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        maxAge: 60 * 60 * 24 * 7, // 7 days
-        path: '/',
-      })
-
-      // Also store user email and role for future use
-      cookieStore.set('user_email', allowedUser.email, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        maxAge: 60 * 60 * 24 * 7, // 7 days
-        path: '/',
-      })
-
-      cookieStore.set('user_role', allowedUser.role, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        maxAge: 60 * 60 * 24 * 7, // 7 days
-        path: '/',
-      })
-
-      return NextResponse.json({ 
-        success: true,
-        user: {
-          email: allowedUser.email,
-          role: allowedUser.role
-        }
-      })
-    } catch (dbError) {
-      console.error('Database error during login:', dbError)
+    if (!allowedUser) {
       return NextResponse.json(
-        { error: 'Database connection error. Please check your database configuration.' },
-        { status: 500 }
+        { error: 'Email not authorized to access this application' },
+        { status: 403 }
       )
     }
+
+    // Set secure cookie with user information
+    const cookieStore = cookies()
+    cookieStore.set('admin_auth', 'true', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 7, // 7 days
+      path: '/',
+    })
+
+    // Also store user email and role for future use
+    cookieStore.set('user_email', allowedUser.email, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 7, // 7 days
+      path: '/',
+    })
+
+    cookieStore.set('user_role', allowedUser.role, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 7, // 7 days
+      path: '/',
+    })
+
+    return NextResponse.json({ 
+      success: true,
+      user: {
+        email: allowedUser.email,
+        role: allowedUser.role
+      }
+    })
   } catch (error) {
     console.error('Login error:', error)
     return NextResponse.json(

@@ -1,0 +1,20 @@
+# No Database Required Setup
+# Copy these to your Vercel environment variables
+
+# Admin Authentication
+ADMIN_PASSWORD="your-secure-admin-password-here"
+
+# Allowed Users (JSON array)
+ALLOWED_USERS='[
+  {
+    "email": "admin@example.com",
+    "role": "ADMIN"
+  },
+  {
+    "email": "user@example.com", 
+    "role": "MEMBER"
+  }
+]'
+
+# Example for multiple users:
+# ALLOWED_USERS='[{"email":"admin@company.com","role":"ADMIN"},{"email":"john@company.com","role":"MEMBER"},{"email":"jane@company.com","role":"MEMBER"}]'
