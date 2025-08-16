@@ -32,7 +32,7 @@ export async function GET() {
     // Fetch all users from database
     const users = await prisma.user.findMany({
       include: {
-        projects: {
+        ownedProjects: {
           include: {
             tasks: true,
           },
@@ -48,7 +48,7 @@ export async function GET() {
     // Calculate stats for each user
     const usersWithStats = users.map(user => ({
       ...user,
-      projectCount: user.projects.length,
+      projectCount: user.ownedProjects.length,
       taskCount: user.createdTasks.length,
       assignedTaskCount: user.assignedTasks.length,
     }))

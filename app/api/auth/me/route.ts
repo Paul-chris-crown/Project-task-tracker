@@ -33,7 +33,7 @@ export async function GET() {
     let user = await prisma.user.findUnique({
       where: { email: userEmail.value },
       include: {
-        projects: {
+        ownedProjects: {
           include: {
             tasks: true,
           },
@@ -51,7 +51,7 @@ export async function GET() {
           role: userRole.value,
         },
         include: {
-          projects: {
+          ownedProjects: {
             include: {
               tasks: true,
             },
@@ -65,7 +65,7 @@ export async function GET() {
     // Calculate user stats
     const userWithStats = {
       ...user,
-      projectCount: user.projects.length,
+      projectCount: user.ownedProjects.length,
       taskCount: user.createdTasks.length,
       assignedTaskCount: user.assignedTasks.length,
     }

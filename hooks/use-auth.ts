@@ -24,7 +24,7 @@ export function useAuth() {
       const response = await fetch('/api/auth/me')
       if (response.ok) {
         const data = await response.json()
-        setUser(data.user)
+        setUser(data)
       } else {
         setError('Failed to fetch user info')
       }

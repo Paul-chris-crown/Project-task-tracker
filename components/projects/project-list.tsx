@@ -18,7 +18,7 @@ interface Project {
   status: string
   startDate: Date | null
   dueDate: Date | null
-  owner: { id: string; name: string }
+  owner: { id: string; name: string; email: string }
   tasks: Array<{ id: string; status: string }>
 }
 
@@ -97,7 +97,7 @@ export function ProjectList({}: ProjectListProps) {
   }
 
   const canEditProject = (project: Project) => {
-    return user && (user.role === 'ADMIN' || project.owner.id === user.id)
+    return user && (user.role === 'ADMIN' || project.owner.email === user.email)
   }
 
   if (isLoading) {
@@ -132,8 +132,8 @@ export function ProjectList({}: ProjectListProps) {
                 </p>
                 
                 <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400 mb-3">
-                  <span className={`font-medium ${project.owner.id === user?.id ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400'}`}>
-                    {project.owner.id === user?.id ? '👑 You own this project' : `Owner: ${project.owner.name}`}
+                  <span className={`font-medium ${project.owner.email === user?.email ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400'}`}>
+                    {project.owner.email === user?.email ? '👑 You own this project' : `Owner: ${project.owner.name}`}
                   </span>
                   {project.startDate && (
                     <span>Start: {new Date(project.startDate).toLocaleDateString()}</span>
