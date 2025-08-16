@@ -7,7 +7,7 @@ ADMIN_PASSWORD="your-secure-admin-password-here"
 # Allowed Users (JSON array)
 ALLOWED_USERS='[
   {
-    "email": "admin@example.com",
+    "email": "adeofdefi@gmail.com",
     "role": "ADMIN"
   },
   {
@@ -17,4 +17,4 @@ ALLOWED_USERS='[
 ]'
 
 # Example for multiple users:
-# ALLOWED_USERS='[{"email":"admin@company.com","role":"ADMIN"},{"email":"john@company.com","role":"MEMBER"},{"email":"jane@company.com","role":"MEMBER"}]'
+# ALLOWED_USERS='[{"email":"adeofdefi@gmail.com","role":"ADMIN"},{"email":"john@company.com","role":"MEMBER"},{"email":"jane@company.com","role":"MEMBER"}]'

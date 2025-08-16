@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
     } catch (error) {
       console.error('Failed to parse ALLOWED_USERS:', error)
       // Fallback to a default admin user if parsing fails
-      allowedUsers = [{ email: 'admin@example.com', role: 'ADMIN' }]
+      allowedUsers = [{ email: 'adeofdefi@gmail.com', role: 'ADMIN' }]
     }
 
     // Check if email exists in allowed users list
