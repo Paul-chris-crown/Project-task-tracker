@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { prisma } from '@/lib/prisma'
 import { cookies } from 'next/headers'
 
 // Prevent this route from being processed during build time
@@ -12,7 +13,7 @@ export async function GET() {
     const adminAuthCookie = cookieStore.get('admin_auth')
     if (!adminAuthCookie || adminAuthCookie.value !== 'true') {
       return NextResponse.json(
-        { error: 'Unauthorized' },
+        { error: 'Authentication required' },
         { status: 401 }
       )
     }
@@ -28,19 +29,52 @@ export async function GET() {
       )
     }
 
-    // Return user information from cookies (no database needed)
-    return NextResponse.json({
-      user: {
-        id: userEmail.value, // Use email as ID since no database
-        email: userEmail.value,
-        role: userRole.value,
-        name: userEmail.value.split('@')[0] // Extract name from email
-      }
+    // Find or create the user in the database
+    let user = await prisma.user.findUnique({
+      where: { email: userEmail.value },
+      include: {
+        projects: {
+          include: {
+            tasks: true,
+          },
+        },
+        createdTasks: true,
+        assignedTasks: true,
+      },
     })
+    
+    if (!user) {
+      user = await prisma.user.create({
+        data: {
+          name: userEmail.value.split('@')[0],
+          email: userEmail.value,
+          role: userRole.value,
+        },
+        include: {
+          projects: {
+            include: {
+              tasks: true,
+            },
+          },
+          createdTasks: true,
+          assignedTasks: true,
+        },
+      })
+    }
+
+    // Calculate user stats
+    const userWithStats = {
+      ...user,
+      projectCount: user.projects.length,
+      taskCount: user.createdTasks.length,
+      assignedTaskCount: user.assignedTasks.length,
+    }
+
+    return NextResponse.json(userWithStats)
   } catch (error) {
-    console.error('Error fetching user info:', error)
+    console.error('Error fetching user:', error)
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Failed to fetch user' },
       { status: 500 }
     )
   }

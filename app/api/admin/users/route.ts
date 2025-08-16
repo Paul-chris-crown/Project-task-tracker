@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { prisma } from '@/lib/prisma'
 import { cookies } from 'next/headers'
 
 // Prevent this route from being processed during build time
@@ -18,27 +19,41 @@ export async function GET() {
     }
 
     // Check if user is admin
+    const userEmail = cookieStore.get('user_email')
     const userRole = cookieStore.get('user_role')
-    if (userRole?.value !== 'ADMIN') {
+
+    if (!userEmail || userRole?.value !== 'ADMIN') {
       return NextResponse.json(
         { error: 'Admin access required' },
         { status: 403 }
       )
     }
 
-    // Return mock users data (no database needed)
-    const mockUsers = [
-      {
-        id: 'user_1',
-        email: 'adeofdefi@gmail.com',
-        role: 'ADMIN',
-        name: 'adeofdefi',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      }
-    ]
+    // Fetch all users from database
+    const users = await prisma.user.findMany({
+      include: {
+        projects: {
+          include: {
+            tasks: true,
+          },
+        },
+        createdTasks: true,
+        assignedTasks: true,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    })
 
-    return NextResponse.json(mockUsers)
+    // Calculate stats for each user
+    const usersWithStats = users.map(user => ({
+      ...user,
+      projectCount: user.projects.length,
+      taskCount: user.createdTasks.length,
+      assignedTaskCount: user.assignedTasks.length,
+    }))
+
+    return NextResponse.json(usersWithStats)
   } catch (error) {
     console.error('Error fetching users:', error)
     return NextResponse.json(
@@ -62,8 +77,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if user is admin
+    const userEmail = cookieStore.get('user_email')
     const userRole = cookieStore.get('user_role')
-    if (userRole?.value !== 'ADMIN') {
+
+    if (!userEmail || userRole?.value !== 'ADMIN') {
       return NextResponse.json(
         { error: 'Admin access required' },
         { status: 403 }
@@ -71,26 +88,38 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { email, role } = body
+    const { name, email, role } = body
 
-    if (!email) {
+    // Validate required fields
+    if (!name || !email || !role) {
       return NextResponse.json(
-        { error: 'Email is required' },
+        { error: 'Name, email, and role are required' },
         { status: 400 }
       )
     }
 
-    // Return mock created user (no database needed)
-    const mockUser = {
-      id: `user_${Date.now()}`,
-      email,
-      role: role || 'MEMBER',
-      name: email.split('@')[0],
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+    // Check if user already exists
+    const existingUser = await prisma.user.findUnique({
+      where: { email }
+    })
+
+    if (existingUser) {
+      return NextResponse.json(
+        { error: 'User with this email already exists' },
+        { status: 409 }
+      )
     }
 
-    return NextResponse.json(mockUser, { status: 201 })
+    // Create new user in database
+    const newUser = await prisma.user.create({
+      data: {
+        name,
+        email,
+        role,
+      },
+    })
+
+    return NextResponse.json(newUser, { status: 201 })
   } catch (error) {
     console.error('Error creating user:', error)
     return NextResponse.json(

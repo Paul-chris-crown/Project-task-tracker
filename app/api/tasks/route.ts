@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { prisma } from '@/lib/prisma'
 import { cookies } from 'next/headers'
 
 // Prevent this route from being processed during build time
@@ -22,7 +23,7 @@ export async function POST(request: NextRequest) {
       title: body.title,
       description: body.description || null,
       status: body.status || 'TODO',
-      dueDate: body.dueDate,
+      dueDate: body.dueDate ? new Date(body.dueDate) : null,
       projectId: body.projectId,
     }
 
@@ -37,28 +38,35 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Return mock task data (no database needed)
-    const mockTask = {
-      id: `task_${Date.now()}`,
-      ...validatedData,
-      createdById: userEmail.value,
-      assigneeId: null,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      project: {
-        id: validatedData.projectId,
-        name: 'Mock Project'
-      },
-      assignee: null,
-      creator: {
-        id: userEmail.value,
-        name: userEmail.value.split('@')[0],
-        email: userEmail.value,
-        role: userRole.value
-      }
+    // Find or create the user in the database
+    let user = await prisma.user.findUnique({
+      where: { email: userEmail.value }
+    })
+    
+    if (!user) {
+      user = await prisma.user.create({
+        data: {
+          name: userEmail.value.split('@')[0],
+          email: userEmail.value,
+          role: userRole.value,
+        },
+      })
     }
 
-    return NextResponse.json(mockTask)
+    // Create the task in the database
+    const task = await prisma.task.create({
+      data: {
+        ...validatedData,
+        createdById: user.id,
+      },
+      include: {
+        project: true,
+        assignee: true,
+        creator: true,
+      },
+    })
+
+    return NextResponse.json(task)
   } catch (error) {
     console.error('Error creating task:', error)
     return NextResponse.json(
@@ -84,34 +92,26 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const projectId = searchParams.get('projectId')
 
-    // Return mock tasks data (no database needed)
-    const mockTasks = [
-      {
-        id: 'task_1',
-        title: 'Sample Task 1',
-        description: 'This is a sample task',
-        status: 'TODO',
-        dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-        projectId: projectId || 'project_1',
-        assigneeId: null,
-        createdById: 'user@example.com',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        project: {
-          id: projectId || 'project_1',
-          name: 'Sample Project'
-        },
-        assignee: null,
-        creator: {
-          id: 'user@example.com',
-          name: 'User',
-          email: 'user@example.com',
-          role: 'MEMBER'
-        }
-      }
-    ]
+    let whereClause: any = {}
 
-    return NextResponse.json(mockTasks)
+    if (projectId) {
+      whereClause.projectId = projectId
+    }
+
+    // Fetch tasks from database
+    const tasks = await prisma.task.findMany({
+      where: whereClause,
+      include: {
+        project: true,
+        assignee: true,
+        creator: true,
+      },
+      orderBy: {
+        updatedAt: 'desc',
+      },
+    })
+
+    return NextResponse.json(tasks)
   } catch (error) {
     console.error('Error fetching tasks:', error)
     return NextResponse.json(
@@ -134,7 +134,9 @@ export async function DELETE() {
       )
     }
 
-    // Return success message (no database operation needed)
+    // Delete all tasks from database
+    await prisma.task.deleteMany()
+    
     return NextResponse.json({ message: 'All tasks deleted successfully' })
   } catch (error) {
     console.error('Error deleting all tasks:', error)
