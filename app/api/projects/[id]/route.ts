@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
-import { requireAuth } from '@/lib/auth'
+import { cookies } from 'next/headers'
 
 // Prevent this route from being processed during build time
 export const dynamic = 'force-dynamic'
@@ -10,57 +9,34 @@ export async function PATCH(
   { params }: { params: { id: string } }
 ) {
   try {
-    const currentUser = await requireAuth()
+    const cookieStore = cookies()
     
-    if (!currentUser) {
+    // Check if user is authenticated
+    const adminAuthCookie = cookieStore.get('admin_auth')
+    if (!adminAuthCookie || adminAuthCookie.value !== 'true') {
       return NextResponse.json(
         { error: 'Authentication required' },
         { status: 401 }
       )
     }
 
-    // Check if project exists and get owner info
-    const project = await prisma.project.findUnique({
-      where: { id: params.id },
-      include: { owner: true }
-    })
-
-    if (!project) {
-      return NextResponse.json(
-        { error: 'Project not found' },
-        { status: 404 }
-      )
-    }
-
-    // Check if user has permission to edit (owner or admin)
-    if (currentUser.role !== 'ADMIN' && project.owner.email !== currentUser.email) {
-      return NextResponse.json(
-        { error: 'You can only edit projects you own' },
-        { status: 403 }
-      )
-    }
-
     const body = await request.json()
-    
-    // Convert date strings to proper DateTime objects
-    const validatedData = {
-      name: body.name,
-      description: body.description || null,
-      startDate: body.startDate ? new Date(body.startDate) : null,
-      dueDate: body.dueDate ? new Date(body.dueDate) : null,
-      status: body.status,
+    const { id } = params
+
+    // Return mock updated project (no database needed)
+    const mockUpdatedProject = {
+      id,
+      name: body.name || 'Updated Project',
+      description: body.description || 'Updated description',
+      status: body.status || 'ACTIVE',
+      startDate: body.startDate || new Date().toISOString(),
+      dueDate: body.dueDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      ownerId: 'user@example.com',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
     }
 
-    const updatedProject = await prisma.project.update({
-      where: { id: params.id },
-      data: validatedData,
-      include: {
-        owner: true,
-        tasks: true,
-      },
-    })
-
-    return NextResponse.json(updatedProject)
+    return NextResponse.json(mockUpdatedProject)
   } catch (error) {
     console.error('Error updating project:', error)
     return NextResponse.json(
@@ -75,41 +51,23 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const currentUser = await requireAuth()
+    const cookieStore = cookies()
     
-    if (!currentUser) {
+    // Check if user is authenticated
+    const adminAuthCookie = cookieStore.get('admin_auth')
+    if (!adminAuthCookie || adminAuthCookie.value !== 'true') {
       return NextResponse.json(
         { error: 'Authentication required' },
         { status: 401 }
       )
     }
 
-    // Check if project exists and get owner info
-    const project = await prisma.project.findUnique({
-      where: { id: params.id },
-      include: { owner: true }
+    const { id } = params
+
+    // Return success message (no database operation needed)
+    return NextResponse.json({ 
+      message: `Project ${id} deleted successfully` 
     })
-
-    if (!project) {
-      return NextResponse.json(
-        { error: 'Project not found' },
-        { status: 404 }
-      )
-    }
-
-    // Check if user has permission to delete (owner or admin)
-    if (currentUser.role !== 'ADMIN' && project.owner.email !== currentUser.email) {
-      return NextResponse.json(
-        { error: 'You can only delete projects you own' },
-        { status: 403 }
-      )
-    }
-
-    await prisma.project.delete({
-      where: { id: params.id },
-    })
-
-    return NextResponse.json({ message: 'Project deleted successfully' })
   } catch (error) {
     console.error('Error deleting project:', error)
     return NextResponse.json(

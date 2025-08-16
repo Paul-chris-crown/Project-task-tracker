@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
-import { requireAuth } from '@/lib/auth'
+import { cookies } from 'next/headers'
 
 // Prevent this route from being processed during build time
 export const dynamic = 'force-dynamic'
@@ -10,62 +9,35 @@ export async function PATCH(
   { params }: { params: { id: string } }
 ) {
   try {
-    const currentUser = await requireAuth()
+    const cookieStore = cookies()
     
-    if (!currentUser) {
+    // Check if user is authenticated
+    const adminAuthCookie = cookieStore.get('admin_auth')
+    if (!adminAuthCookie || adminAuthCookie.value !== 'true') {
       return NextResponse.json(
         { error: 'Authentication required' },
         { status: 401 }
       )
     }
 
-    // Check if task exists and get creator info
-    const task = await prisma.task.findUnique({
-      where: { id: params.id },
-      include: { 
-        creator: true,
-        project: { include: { owner: true } }
-      }
-    })
-
-    if (!task) {
-      return NextResponse.json(
-        { error: 'Task not found' },
-        { status: 404 }
-      )
-    }
-
-    // Check if user has permission to edit (creator, project owner, or admin)
-    const canEdit = currentUser.role === 'ADMIN' || 
-                   task.creator.email === currentUser.email ||
-                   task.project.owner.email === currentUser.email
-
-    if (!canEdit) {
-      return NextResponse.json(
-        { error: 'You can only edit tasks you created or tasks in projects you own' },
-        { status: 403 }
-      )
-    }
-
     const body = await request.json()
-    const validatedData = {
-      title: body.title,
-      description: body.description || null,
-      status: body.status,
-      dueDate: body.dueDate,
+    const { id } = params
+
+    // Return mock updated task (no database needed)
+    const mockUpdatedTask = {
+      id,
+      title: body.title || 'Updated Task',
+      description: body.description || 'Updated description',
+      status: body.status || 'IN_PROGRESS',
+      dueDate: body.dueDate || new Date().toISOString(),
+      projectId: body.projectId || 'project_1',
+      assigneeId: body.assigneeId || null,
+      createdById: 'user@example.com',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
     }
 
-    const updatedTask = await prisma.task.update({
-      where: { id: params.id },
-      data: validatedData,
-      include: {
-        project: true,
-        assignee: true,
-        creator: true,
-      },
-    })
-
-    return NextResponse.json(updatedTask)
+    return NextResponse.json(mockUpdatedTask)
   } catch (error) {
     console.error('Error updating task:', error)
     return NextResponse.json(
@@ -80,48 +52,23 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const currentUser = await requireAuth()
+    const cookieStore = cookies()
     
-    if (!currentUser) {
+    // Check if user is authenticated
+    const adminAuthCookie = cookieStore.get('admin_auth')
+    if (!adminAuthCookie || adminAuthCookie.value !== 'true') {
       return NextResponse.json(
         { error: 'Authentication required' },
         { status: 401 }
       )
     }
 
-    // Check if task exists and get creator info
-    const task = await prisma.task.findUnique({
-      where: { id: params.id },
-      include: { 
-        creator: true,
-        project: { include: { owner: true } }
-      }
+    const { id } = params
+
+    // Return success message (no database operation needed)
+    return NextResponse.json({ 
+      message: `Task ${id} deleted successfully` 
     })
-
-    if (!task) {
-      return NextResponse.json(
-        { error: 'Task not found' },
-        { status: 404 }
-      )
-    }
-
-    // Check if user has permission to delete (creator, project owner, or admin)
-    const canDelete = currentUser.role === 'ADMIN' || 
-                     task.creator.email === currentUser.email ||
-                     task.project.owner.email === currentUser.email
-
-    if (!canDelete) {
-      return NextResponse.json(
-        { error: 'You can only delete tasks you created or tasks in projects you own' },
-        { status: 403 }
-      )
-    }
-
-    await prisma.task.delete({
-      where: { id: params.id },
-    })
-
-    return NextResponse.json({ message: 'Task deleted successfully' })
   } catch (error) {
     console.error('Error deleting task:', error)
     return NextResponse.json(

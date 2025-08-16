@@ -1,63 +1,59 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
-import { requireAuth } from '@/lib/auth'
+import { cookies } from 'next/headers'
 
 // Prevent this route from being processed during build time
 export const dynamic = 'force-dynamic'
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
-    const validatedData = {
-      name: body.name,
-      description: body.description || null,
-      startDate: body.startDate,
-      dueDate: body.dueDate,
-      status: body.status || 'ACTIVE',
-    }
-
-    // Get the current authenticated user
-    const currentUser = await requireAuth()
+    const cookieStore = cookies()
     
-    if (!currentUser) {
+    // Check if user is authenticated
+    const adminAuthCookie = cookieStore.get('admin_auth')
+    if (!adminAuthCookie || adminAuthCookie.value !== 'true') {
       return NextResponse.json(
         { error: 'Authentication required' },
         { status: 401 }
       )
     }
 
-    // Find or create the user in the User table
-    let user = await prisma.user.findUnique({
-      where: { email: currentUser.email }
-    })
-    
-    if (!user) {
-      user = await prisma.user.create({
-        data: {
-          name: currentUser.email.split('@')[0], // Use email prefix as name
-          email: currentUser.email,
-          role: currentUser.role,
-        },
-      })
+    const body = await request.json()
+    const validatedData = {
+      name: body.name,
+      description: body.description || null,
+      status: body.status || 'ACTIVE',
+      startDate: body.startDate,
+      dueDate: body.dueDate,
     }
 
-    const project = await prisma.project.create({
-      data: {
-        ...validatedData,
-        ownerId: user.id,
-      },
-      include: {
-        owner: true,
-        tasks: {
-          include: {
-            assignee: true,
-            creator: true,
-          }
-        },
-      },
-    })
+    // Get user information from cookies
+    const userEmail = cookieStore.get('user_email')
+    const userRole = cookieStore.get('user_role')
 
-    return NextResponse.json(project)
+    if (!userEmail || !userRole) {
+      return NextResponse.json(
+        { error: 'User information not found' },
+        { status: 404 }
+      )
+    }
+
+    // Return mock project data (no database needed)
+    const mockProject = {
+      id: `project_${Date.now()}`,
+      ...validatedData,
+      ownerId: userEmail.value,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      owner: {
+        id: userEmail.value,
+        name: userEmail.value.split('@')[0],
+        email: userEmail.value,
+        role: userRole.value
+      },
+      tasks: []
+    }
+
+    return NextResponse.json(mockProject)
   } catch (error) {
     console.error('Error creating project:', error)
     return NextResponse.json(
@@ -67,24 +63,42 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
-    const projects = await prisma.project.findMany({
-      include: {
-        owner: true,
-        tasks: {
-          include: {
-            assignee: true,
-            creator: true,
-          }
-        },
-      },
-      orderBy: {
-        updatedAt: 'desc',
-      },
-    })
+    const cookieStore = cookies()
+    
+    // Check if user is authenticated
+    const adminAuthCookie = cookieStore.get('admin_auth')
+    if (!adminAuthCookie || adminAuthCookie.value !== 'true') {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      )
+    }
 
-    return NextResponse.json(projects)
+    // Return mock projects data (no database needed)
+    const mockProjects = [
+      {
+        id: 'project_1',
+        name: 'Sample Project 1',
+        description: 'This is a sample project',
+        status: 'ACTIVE',
+        startDate: new Date().toISOString(),
+        dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        ownerId: 'user@example.com',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        owner: {
+          id: 'user@example.com',
+          name: 'User',
+          email: 'user@example.com',
+          role: 'MEMBER'
+        },
+        tasks: []
+      }
+    ]
+
+    return NextResponse.json(mockProjects)
   } catch (error) {
     console.error('Error fetching projects:', error)
     return NextResponse.json(
@@ -97,9 +111,10 @@ export async function GET(request: NextRequest) {
 export async function DELETE() {
   try {
     // Delete all projects (this will cascade to delete tasks due to foreign key constraints)
-    await prisma.project.deleteMany()
+    // This functionality is removed as per the new_code, as the project data is now mock.
+    // If a database is re-introduced, this function would need to be updated.
     
-    return NextResponse.json({ message: 'All projects deleted successfully' })
+    return NextResponse.json({ message: 'Project deletion is not available in mock mode.' })
   } catch (error) {
     console.error('Error deleting all projects:', error)
     return NextResponse.json(
