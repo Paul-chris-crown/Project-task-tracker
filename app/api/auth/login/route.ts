@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
     if (!adminPassword) {
       console.error('ADMIN_PASSWORD environment variable is not set')
       return NextResponse.json(
-        { error: 'Server configuration error' },
+        { error: 'Server configuration error: ADMIN_PASSWORD not set' },
         { status: 500 }
       )
     }
@@ -35,52 +35,69 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Check if email exists in allowed users list
-    const allowedUser = await prisma.allowedUser.findUnique({
-      where: { email: email.toLowerCase() }
-    })
-
-    if (!allowedUser) {
+    // Check if DATABASE_URL is available
+    if (!process.env.DATABASE_URL) {
+      console.error('DATABASE_URL environment variable is not set')
       return NextResponse.json(
-        { error: 'Email not authorized to access this application' },
-        { status: 403 }
+        { error: 'Server configuration error: Database connection not configured' },
+        { status: 500 }
       )
     }
 
-    // Set secure cookie with user information
-    const cookieStore = cookies()
-    cookieStore.set('admin_auth', 'true', {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7, // 7 days
-      path: '/',
-    })
+    try {
+      // Check if email exists in allowed users list
+      const allowedUser = await prisma.allowedUser.findUnique({
+        where: { email: email.toLowerCase() }
+      })
 
-    // Also store user email and role for future use
-    cookieStore.set('user_email', allowedUser.email, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7, // 7 days
-      path: '/',
-    })
-
-    cookieStore.set('user_role', allowedUser.role, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7, // 7 days
-      path: '/',
-    })
-
-    return NextResponse.json({ 
-      success: true,
-      user: {
-        email: allowedUser.email,
-        role: allowedUser.role
+      if (!allowedUser) {
+        return NextResponse.json(
+          { error: 'Email not authorized to access this application' },
+          { status: 403 }
+        )
       }
-    })
+
+      // Set secure cookie with user information
+      const cookieStore = cookies()
+      cookieStore.set('admin_auth', 'true', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 60 * 60 * 24 * 7, // 7 days
+        path: '/',
+      })
+
+      // Also store user email and role for future use
+      cookieStore.set('user_email', allowedUser.email, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 60 * 60 * 24 * 7, // 7 days
+        path: '/',
+      })
+
+      cookieStore.set('user_role', allowedUser.role, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 60 * 60 * 24 * 7, // 7 days
+        path: '/',
+      })
+
+      return NextResponse.json({ 
+        success: true,
+        user: {
+          email: allowedUser.email,
+          role: allowedUser.role
+        }
+      })
+    } catch (dbError) {
+      console.error('Database error during login:', dbError)
+      return NextResponse.json(
+        { error: 'Database connection error. Please check your database configuration.' },
+        { status: 500 }
+      )
+    }
   } catch (error) {
     console.error('Login error:', error)
     return NextResponse.json(

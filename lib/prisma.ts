@@ -16,9 +16,14 @@ const createPrismaClient = () => {
     return null
   }
   
-  return new PrismaClient({
-    log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
-  })
+  try {
+    return new PrismaClient({
+      log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
+    })
+  } catch (error) {
+    console.error('Failed to create Prisma client:', error)
+    return null
+  }
 }
 
 // Create a safe Prisma client that handles build-time scenarios
@@ -26,7 +31,7 @@ const createSafePrismaClient = () => {
   const client = globalForPrisma.prisma ?? createPrismaClient()
   
   if (!client) {
-    // Return a mock client that won't cause build errors
+    // Return a mock client that provides better error messages
     return new Proxy({} as PrismaClient, {
       get(target, prop) {
         if (typeof prop === 'string') {
@@ -37,7 +42,7 @@ const createSafePrismaClient = () => {
                   console.warn(`Prisma operation ${prop} called during build time - returning null`)
                   return Promise.resolve(null)
                 }
-                throw new Error('Prisma client not available')
+                throw new Error('Database connection not available. Please check your DATABASE_URL environment variable.')
               }
             }
           })
