@@ -28,10 +28,6 @@ export default function ProjectTaskList({ projectId }: ProjectTaskListProps) {
   const [editingTask, setEditingTask] = useState<Task | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
-  useEffect(() => {
-    fetchTasks()
-  }, [projectId, fetchTasks])
-
   const fetchTasks = useCallback(async () => {
     try {
       const response = await fetch(`/api/tasks?projectId=${projectId}`)
@@ -45,6 +41,10 @@ export default function ProjectTaskList({ projectId }: ProjectTaskListProps) {
       setIsLoading(false)
     }
   }, [projectId])
+
+  useEffect(() => {
+    fetchTasks()
+  }, [projectId, fetchTasks])
 
   const getStatusIcon = (status: string) => {
     switch (status) {

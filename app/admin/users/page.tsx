@@ -26,10 +26,6 @@ export default function AdminUsersPage() {
   const [isAdding, setIsAdding] = useState(false)
   const [newUser, setNewUser] = useState({ email: '', role: 'MEMBER' })
 
-  useEffect(() => {
-    fetchUsers()
-  }, [fetchUsers])
-
   const fetchUsers = useCallback(async () => {
     try {
       setIsLoading(true)
@@ -49,6 +45,10 @@ export default function AdminUsersPage() {
       setIsLoading(false)
     }
   }, [toast])
+
+  useEffect(() => {
+    fetchUsers()
+  }, [fetchUsers])
 
   const addUser = async (e: React.FormEvent) => {
     e.preventDefault()
