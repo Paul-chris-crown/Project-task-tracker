@@ -1,7 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
-import { prisma } from '@/lib/prisma'
-import { requireAuth } from '@/lib/auth'
 
 // Prevent this route from being processed during build time
 export const dynamic = 'force-dynamic'
@@ -30,30 +28,13 @@ export async function GET() {
       )
     }
 
-    // Get complete user information from database
-    const user = await prisma.user.findUnique({
-      where: { email: userEmail.value },
-      select: {
-        id: true,
-        email: true,
-        role: true,
-        name: true
-      }
-    })
-
-    if (!user) {
-      return NextResponse.json(
-        { error: 'User not found in database' },
-        { status: 404 }
-      )
-    }
-
+    // Return user information from cookies (no database needed)
     return NextResponse.json({
       user: {
-        id: user.id,
-        email: user.email,
-        role: user.role,
-        name: user.name
+        id: userEmail.value, // Use email as ID since no database
+        email: userEmail.value,
+        role: userRole.value,
+        name: userEmail.value.split('@')[0] // Extract name from email
       }
     })
   } catch (error) {
