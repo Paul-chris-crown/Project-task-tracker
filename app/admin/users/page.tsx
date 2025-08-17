@@ -24,12 +24,14 @@ export default function AdminUsersPage() {
   const [users, setUsers] = useState<AllowedUser[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isAdding, setIsAdding] = useState(false)
-  const [newUser, setNewUser] = useState({ email: '', role: 'MEMBER' })
+  const [newUser, setNewUser] = useState({ name: '', email: '', role: 'MEMBER' })
 
   const fetchUsers = useCallback(async () => {
     try {
       setIsLoading(true)
-      const response = await fetch('/api/admin/users')
+      const response = await fetch('/api/admin/users', {
+        credentials: 'include'
+      })
       if (response.ok) {
         const data = await response.json()
         setUsers(data)
@@ -52,6 +54,14 @@ export default function AdminUsersPage() {
 
   const addUser = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!newUser.name.trim()) {
+      toast({
+        title: 'Error',
+        description: 'Please enter a name',
+        variant: 'destructive',
+      })
+      return
+    }
     if (!newUser.email.trim()) {
       toast({
         title: 'Error',
@@ -66,6 +76,7 @@ export default function AdminUsersPage() {
       const response = await fetch('/api/admin/users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify(newUser),
       })
 
@@ -74,7 +85,7 @@ export default function AdminUsersPage() {
           title: 'Success',
           description: 'User added successfully',
         })
-        setNewUser({ email: '', role: 'MEMBER' })
+        setNewUser({ name: '', email: '', role: 'MEMBER' })
         fetchUsers()
       } else {
         const error = await response.json()
@@ -99,6 +110,7 @@ export default function AdminUsersPage() {
     try {
       const response = await fetch(`/api/admin/users/${userId}`, {
         method: 'DELETE',
+        credentials: 'include',
       })
 
       if (response.ok) {
@@ -143,7 +155,19 @@ export default function AdminUsersPage() {
           </CardHeader>
           <CardContent>
             <form onSubmit={addUser} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <Label htmlFor="name" className="text-gray-700 dark:text-gray-300">Name</Label>
+                  <Input
+                    id="name"
+                    type="text"
+                    value={newUser.name}
+                    onChange={(e) => setNewUser({ ...newUser, name: e.target.value })}
+                    placeholder="User Name"
+                    className="bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:text-gray-400"
+                    required
+                  />
+                </div>
                 <div>
                   <Label htmlFor="email" className="text-gray-700 dark:text-gray-300">Email Address</Label>
                   <Input
