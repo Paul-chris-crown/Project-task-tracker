@@ -11,11 +11,9 @@ interface UserStats {
   name: string
   email: string
   role: string
-  _count: {
-    ownedProjects: number
-    createdTasks: number
-    assignedTasks: number
-  }
+  projectCount: number
+  taskCount: number
+  assignedTaskCount: number
   ownedProjects: Array<{
     id: string
     name: string
@@ -54,7 +52,9 @@ export function TeamStats() {
 
   const fetchUserStats = async () => {
     try {
-      const response = await fetch('/api/users/stats')
+      const response = await fetch('/api/admin/users', {
+        credentials: 'include'
+      })
       if (response.ok) {
         const data = await response.json()
         setUserStats(data)
@@ -122,19 +122,19 @@ export function TeamStats() {
               <div className="grid grid-cols-3 gap-4 mb-4">
                 <div className="text-center">
                   <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                    {user._count.ownedProjects}
+                    {user.projectCount}
                   </div>
                   <div className="text-xs text-gray-500 dark:text-gray-400">Projects</div>
                 </div>
                 <div className="text-center">
                   <div className="text-2xl font-bold text-green-600 dark:text-green-400">
-                    {user._count.createdTasks}
+                    {user.taskCount}
                   </div>
                   <div className="text-xs text-gray-500 dark:text-gray-400">Created</div>
                 </div>
                 <div className="text-center">
                   <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
-                    {user._count.assignedTasks}
+                    {user.assignedTaskCount}
                   </div>
                   <div className="text-xs text-gray-500 dark:text-gray-400">Assigned</div>
                 </div>
