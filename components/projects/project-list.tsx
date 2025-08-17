@@ -138,10 +138,22 @@ export function ProjectList({}: ProjectListProps) {
                     {project.owner.email === user?.email ? '👑 You own this project' : `Owner: ${project.owner.name}`}
                   </span>
                   {project.startDate && (
-                    <span>Start: {new Date(project.startDate).toLocaleDateString()}</span>
+                    <span>Start: {(() => {
+                      try {
+                        return new Date(project.startDate).toLocaleDateString()
+                      } catch (error) {
+                        return 'Invalid date'
+                      }
+                    })()}</span>
                   )}
                   {project.dueDate && (
-                    <span>Due: {new Date(project.dueDate).toLocaleDateString()}</span>
+                    <span>Due: {(() => {
+                      try {
+                        return new Date(project.dueDate).toLocaleDateString()
+                      } catch (error) {
+                        return 'Invalid date'
+                      }
+                    })()}</span>
                   )}
                 </div>
 

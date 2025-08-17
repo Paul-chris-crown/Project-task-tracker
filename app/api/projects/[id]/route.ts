@@ -5,6 +5,53 @@ import { cookies } from 'next/headers'
 // Prevent this route from being processed during build time
 export const dynamic = 'force-dynamic'
 
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const cookieStore = cookies()
+    
+    // Check if user is authenticated
+    const adminAuthCookie = cookieStore.get('admin_auth')
+    if (!adminAuthCookie || adminAuthCookie.value !== 'true') {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      )
+    }
+
+    // Fetch the project from database
+    const project = await prisma.project.findUnique({
+      where: { id: params.id },
+      include: {
+        owner: true,
+        tasks: {
+          include: {
+            assignee: true,
+            creator: true,
+          }
+        },
+      },
+    })
+
+    if (!project) {
+      return NextResponse.json(
+        { error: 'Project not found' },
+        { status: 404 }
+      )
+    }
+
+    return NextResponse.json(project)
+  } catch (error) {
+    console.error('Error fetching project:', error)
+    return NextResponse.json(
+      { error: 'Failed to fetch project' },
+      { status: 500 }
+    )
+  }
+}
+
 export async function PATCH(
   request: NextRequest,
   { params }: { params: { id: string } }
