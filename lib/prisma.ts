@@ -11,9 +11,20 @@ const createPrismaClient = () => {
   })
 }
 
-// Use global instance in development to prevent multiple instances
-export const prisma = globalForPrisma.prisma ?? createPrismaClient()
-
-if (process.env.NODE_ENV !== "production") {
-  globalForPrisma.prisma = prisma
+// Lazy load to prevent build-time database connections
+export function getPrismaClient() {
+  if (globalForPrisma.prisma) {
+    return globalForPrisma.prisma
+  }
+  
+  const client = createPrismaClient()
+  
+  if (process.env.NODE_ENV !== "production") {
+    globalForPrisma.prisma = client
+  }
+  
+  return client
 }
+
+// Export a default instance for backward compatibility
+export const prisma = getPrismaClient()
