@@ -62,13 +62,24 @@ export function OrganizationStats() {
         
         const completionRate = safeNumber(tasks.length) > 0 ? Math.round((completedTasks / safeNumber(tasks.length)) * 100) : 0
 
+        // Validate data before setting stats
+        const validProjects = Array.isArray(projects) ? projects : []
+        const validTasks = Array.isArray(tasks) ? tasks : []
+        const validUsers = Array.isArray(teamStats?.users) ? teamStats.users : []
+        
+        console.log('Validated data:', {
+          projectsCount: validProjects.length,
+          tasksCount: validTasks.length,
+          usersCount: validUsers.length
+        })
+        
         setStats({
-          totalProjects: safeNumber(projects.length),
-          totalTasks: safeNumber(tasks.length),
+          totalProjects: safeNumber(validProjects.length),
+          totalTasks: safeNumber(validTasks.length),
           completedTasks,
           overdueTasks,
-          totalUsers: safeNumber(teamStats.users?.length || 0),
-          activeUsers: safeNumber(teamStats.users?.length || 0),
+          totalUsers: safeNumber(validUsers.length),
+          activeUsers: safeNumber(validUsers.length),
           completionRate,
         })
       } else {
