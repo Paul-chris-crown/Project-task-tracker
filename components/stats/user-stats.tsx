@@ -187,7 +187,7 @@ export function TeamStats() {
                             </Badge>
                           </div>
                           <div className="text-xs text-gray-500 dark:text-gray-400">
-                            in {task.project.name}
+                            in {task.project?.name || 'Unknown Project'}
                           </div>
                         </div>
                       ))
@@ -211,7 +211,7 @@ export function TeamStats() {
                             </Badge>
                           </div>
                           <div className="text-xs text-gray-500 dark:text-gray-400">
-                            in {task.project.name}
+                            in {task.project?.name || 'Unknown Project'}
                           </div>
                         </div>
                       ))

@@ -37,8 +37,16 @@ export async function GET() {
             tasks: true,
           },
         },
-        createdTasks: true,
-        assignedTasks: true,
+        createdTasks: {
+          include: {
+            project: true,
+          },
+        },
+        assignedTasks: {
+          include: {
+            project: true,
+          },
+        },
       },
       orderBy: {
         createdAt: 'desc',
