@@ -9,8 +9,13 @@ export async function POST(request: NextRequest) {
   try {
     const cookieStore = cookies()
     
+    // Debug: Log all cookies
+    console.log('All cookies:', cookieStore.getAll())
+    
     // Check if user is authenticated
     const adminAuthCookie = cookieStore.get('admin_auth')
+    console.log('Admin auth cookie:', adminAuthCookie)
+    
     if (!adminAuthCookie || adminAuthCookie.value !== 'true') {
       return NextResponse.json(
         { error: 'Authentication required' },
@@ -19,6 +24,8 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
+    console.log('Request body:', body)
+    
     const validatedData = {
       name: body.name,
       description: body.description || null,
@@ -30,6 +37,9 @@ export async function POST(request: NextRequest) {
     // Get user information from cookies
     const userEmail = cookieStore.get('user_email')
     const userRole = cookieStore.get('user_role')
+    
+    console.log('User email cookie:', userEmail)
+    console.log('User role cookie:', userRole)
 
     if (!userEmail || !userRole) {
       return NextResponse.json(
@@ -39,11 +49,20 @@ export async function POST(request: NextRequest) {
     }
 
     // Find or create the user in the database
+    console.log('Looking for user with email:', userEmail.value)
     let user = await prisma.user.findUnique({
       where: { email: userEmail.value }
     })
     
+    console.log('Existing user found:', user)
+    
     if (!user) {
+      console.log('Creating new user with data:', {
+        name: userEmail.value.split('@')[0],
+        email: userEmail.value,
+        role: userRole.value,
+      })
+      
       user = await prisma.user.create({
         data: {
           name: userEmail.value.split('@')[0],
@@ -51,9 +70,16 @@ export async function POST(request: NextRequest) {
           role: userRole.value,
         },
       })
+      
+      console.log('New user created:', user)
     }
 
     // Create the project in the database
+    console.log('Creating project with data:', {
+      ...validatedData,
+      ownerId: user.id,
+    })
+    
     const project = await prisma.project.create({
       data: {
         ...validatedData,
@@ -70,6 +96,7 @@ export async function POST(request: NextRequest) {
       },
     })
 
+    console.log('Project created successfully:', project)
     return NextResponse.json(project)
   } catch (error) {
     console.error('Error creating project:', error)
