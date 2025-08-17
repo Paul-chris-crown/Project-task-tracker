@@ -135,6 +135,44 @@ export async function GET(request: NextRequest) {
       projectCount: user.ownedProjects.length,
       taskCount: user.createdTasks.length,
       assignedTaskCount: user.assignedTasks.length,
+      // Include actual project objects for detailed display
+      ownedProjects: user.ownedProjects.map(project => ({
+        id: project.id,
+        name: project.name,
+        status: project.status,
+        description: project.description,
+        startDate: project.startDate,
+        dueDate: project.dueDate,
+        createdAt: project.createdAt,
+        updatedAt: project.updatedAt,
+        // Include task count for this project
+        taskCount: project.tasks.length,
+        completedTaskCount: project.tasks.filter(task => task.status === 'COMPLETED').length,
+      })),
+      // Include created tasks for detailed display
+      createdTasks: user.createdTasks.map(task => ({
+        id: task.id,
+        title: task.title,
+        status: task.status,
+        description: task.description,
+        dueDate: task.dueDate,
+        createdAt: task.createdAt,
+        updatedAt: task.updatedAt,
+        projectName: task.project?.name || 'Unknown Project',
+        projectId: task.project?.id,
+      })),
+      // Include assigned tasks for detailed display
+      assignedTasks: user.assignedTasks.map(task => ({
+        id: task.id,
+        title: task.title,
+        status: task.status,
+        description: task.description,
+        dueDate: task.dueDate,
+        createdAt: task.createdAt,
+        updatedAt: task.updatedAt,
+        projectName: task.project?.name || 'Unknown Project',
+        projectId: task.project?.id,
+      })),
     }))
 
     // Calculate organization-wide stats

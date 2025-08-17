@@ -182,25 +182,75 @@ export function TeamStats() {
 
                 <TabsContent value="projects" className="mt-3">
                   <div className="space-y-2 max-h-32 overflow-y-auto">
-                    <div className="text-sm text-gray-500 dark:text-gray-400 text-center py-2">
-                      {user.projectCount} project{user.projectCount !== 1 ? 's' : ''} owned
-                    </div>
+                    {user.ownedProjects && user.ownedProjects.length > 0 ? (
+                      user.ownedProjects.map((project: any) => (
+                        <div key={project.id} className="flex items-center justify-between text-sm text-gray-900 dark:text-white p-2 bg-gray-50 dark:bg-gray-800 rounded">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between">
+                              <span className="truncate font-medium">{project.name}</span>
+                              <Badge className={`text-xs ml-2 ${getStatusColor(project.status)}`}>
+                                {project.status}
+                              </Badge>
+                            </div>
+                            <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                              {project.taskCount} task{project.taskCount !== 1 ? 's' : ''} • {project.completedTaskCount} completed
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-sm text-gray-500 dark:text-gray-400 text-center py-2">
+                        No projects owned
+                      </div>
+                    )}
                   </div>
                 </TabsContent>
 
                 <TabsContent value="created" className="mt-3">
                   <div className="space-y-2 max-h-32 overflow-y-auto">
-                    <div className="text-sm text-gray-500 dark:text-gray-400 text-center py-2">
-                      {user.taskCount} task{user.taskCount !== 1 ? 's' : ''} created
-                    </div>
+                    {user.createdTasks && user.createdTasks.length > 0 ? (
+                      user.createdTasks.map((task: any) => (
+                        <div key={task.id} className="text-sm text-gray-900 dark:text-white p-2 bg-gray-50 dark:bg-gray-800 rounded">
+                          <div className="flex items-center justify-between">
+                            <span className="truncate font-medium">{task.title}</span>
+                            <Badge className={`text-xs ml-2 ${getStatusColor(task.status)}`}>
+                              {task.status}
+                            </Badge>
+                          </div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                            in {task.projectName}
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-sm text-gray-500 dark:text-gray-400 text-center py-2">
+                        No tasks created
+                      </div>
+                    )}
                   </div>
                 </TabsContent>
 
                 <TabsContent value="assigned" className="mt-3">
                   <div className="space-y-2 max-h-32 overflow-y-auto">
-                    <div className="text-sm text-gray-500 dark:text-gray-400 text-center py-2">
-                      {user.assignedTaskCount} task{user.assignedTaskCount !== 1 ? 's' : ''} assigned
-                    </div>
+                    {user.assignedTasks && user.assignedTasks.length > 0 ? (
+                      user.assignedTasks.map((task: any) => (
+                        <div key={task.id} className="text-sm text-gray-900 dark:text-white p-2 bg-gray-50 dark:bg-gray-800 rounded">
+                          <div className="flex items-center justify-between">
+                            <span className="truncate font-medium">{task.title}</span>
+                            <Badge className={`text-xs ml-2 ${getStatusColor(task.status)}`}>
+                              {task.status}
+                            </Badge>
+                          </div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                            in {task.projectName}
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-sm text-gray-500 dark:text-gray-400 text-center py-2">
+                        No tasks assigned
+                      </div>
+                    )}
                   </div>
                 </TabsContent>
               </Tabs>
