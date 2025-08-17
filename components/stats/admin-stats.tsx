@@ -36,16 +36,16 @@ export function OrganizationStats() {
       setIsLoading(true)
       
       // Fetch all data to calculate stats
-      const [projectsResponse, tasksResponse, allowedUsersResponse] = await Promise.all([
-        fetch('/api/projects'),
-        fetch('/api/tasks'),
-        fetch('/api/admin/users') // Use the admin users endpoint instead
+      const [projectsResponse, tasksResponse, teamStatsResponse] = await Promise.all([
+        fetch('/api/projects', { credentials: 'include' }),
+        fetch('/api/tasks', { credentials: 'include' }),
+        fetch('/api/team/stats', { credentials: 'include' }) // Use the team stats endpoint
       ])
 
-      if (projectsResponse.ok && tasksResponse.ok) {
+      if (projectsResponse.ok && tasksResponse.ok && teamStatsResponse.ok) {
         const projects = await projectsResponse.json()
         const tasks = await tasksResponse.json()
-        const allowedUsers = allowedUsersResponse.ok ? await allowedUsersResponse.json() : []
+        const teamStats = await teamStatsResponse.json()
         
         const completedTasks = safeNumber(tasks.filter((task: any) => task.status === 'COMPLETED').length)
         const overdueTasks = safeNumber(tasks.filter((task: any) => {
@@ -60,8 +60,8 @@ export function OrganizationStats() {
           totalTasks: safeNumber(tasks.length),
           completedTasks,
           overdueTasks,
-          totalUsers: safeNumber(allowedUsers.length),
-          activeUsers: safeNumber(allowedUsers.length), // For now, assume all allowed users are active
+          totalUsers: safeNumber(teamStats.users?.length || 0),
+          activeUsers: safeNumber(teamStats.users?.length || 0),
           completionRate,
         })
       }

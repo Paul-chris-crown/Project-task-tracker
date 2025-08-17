@@ -52,12 +52,12 @@ export function TeamStats() {
 
   const fetchUserStats = async () => {
     try {
-      const response = await fetch('/api/admin/users', {
+      const response = await fetch('/api/team/stats', {
         credentials: 'include'
       })
       if (response.ok) {
         const data = await response.json()
-        setUserStats(data)
+        setUserStats(data.users || [])
       }
     } catch (error) {
       console.error('Error fetching user stats:', error)
