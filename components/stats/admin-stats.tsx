@@ -47,10 +47,17 @@ export function OrganizationStats() {
         const tasks = await tasksResponse.json()
         const teamStats = await teamStatsResponse.json()
         
+        console.log('Admin stats data:', { projects, tasks, teamStats })
+        
         const completedTasks = safeNumber(tasks.filter((task: any) => task.status === 'COMPLETED').length)
         const overdueTasks = safeNumber(tasks.filter((task: any) => {
           if (!task.dueDate || task.status === 'COMPLETED') return false
-          return new Date() > new Date(task.dueDate)
+          try {
+            return new Date() > new Date(task.dueDate)
+          } catch (error) {
+            console.error('Error parsing task due date:', task.dueDate, error)
+            return false
+          }
         }).length)
         
         const completionRate = safeNumber(tasks.length) > 0 ? Math.round((completedTasks / safeNumber(tasks.length)) * 100) : 0
@@ -63,6 +70,12 @@ export function OrganizationStats() {
           totalUsers: safeNumber(teamStats.users?.length || 0),
           activeUsers: safeNumber(teamStats.users?.length || 0),
           completionRate,
+        })
+      } else {
+        console.error('Failed to fetch data:', {
+          projects: projectsResponse.status,
+          tasks: tasksResponse.status,
+          teamStats: teamStatsResponse.status
         })
       }
     } catch (error) {

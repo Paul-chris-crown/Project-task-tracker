@@ -57,7 +57,15 @@ export function TeamStats() {
       })
       if (response.ok) {
         const data = await response.json()
-        setUserStats(data.users || [])
+        console.log('Team stats response:', data)
+        if (data.users && Array.isArray(data.users)) {
+          setUserStats(data.users)
+        } else {
+          console.error('Invalid users data:', data.users)
+          setUserStats([])
+        }
+      } else {
+        console.error('Failed to fetch user stats:', response.status, response.statusText)
       }
     } catch (error) {
       console.error('Error fetching user stats:', error)

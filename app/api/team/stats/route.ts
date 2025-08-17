@@ -132,9 +132,9 @@ export async function GET(request: NextRequest) {
       name: user.name,
       email: user.email,
       role: user.role,
-      projectCount: user.role === 'ADMIN' ? user.ownedProjects.length : user.ownedProjects.length,
-      taskCount: user.role === 'ADMIN' ? user.createdTasks.length : user.createdTasks.length,
-      assignedTaskCount: user.role === 'ADMIN' ? user.assignedTasks.length : user.assignedTasks.length,
+      projectCount: user.ownedProjects.length,
+      taskCount: user.createdTasks.length,
+      assignedTaskCount: user.assignedTasks.length,
     }))
 
     // Calculate organization-wide stats
@@ -143,9 +143,23 @@ export async function GET(request: NextRequest) {
     const completedTasks = tasks.filter(task => task.status === 'COMPLETED').length
     const overdueTasks = tasks.filter(task => {
       if (!task.dueDate || task.status === 'COMPLETED') return false
-      return new Date() > new Date(task.dueDate)
+      try {
+        return new Date() > new Date(task.dueDate)
+      } catch (error) {
+        console.error('Error parsing due date:', task.dueDate, error)
+        return false
+      }
     }).length
     const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0
+
+    console.log('Team stats calculated:', {
+      totalUsers: usersWithStats.length,
+      totalProjects,
+      totalTasks,
+      completedTasks,
+      overdueTasks,
+      completionRate
+    })
 
     return NextResponse.json({
       users: usersWithStatsData,
