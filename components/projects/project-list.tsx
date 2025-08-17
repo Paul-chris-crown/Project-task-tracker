@@ -38,7 +38,9 @@ export function ProjectList({}: ProjectListProps) {
   const fetchProjects = async () => {
     try {
       setIsLoading(true)
-      const response = await fetch('/api/projects')
+      const response = await fetch('/api/projects', {
+        credentials: 'include' // Include cookies in the request
+      })
       if (response.ok) {
         const data = await response.json()
         setProjects(data)

@@ -21,7 +21,9 @@ export function useAuth() {
       setIsLoading(true)
       setError(null)
       
-      const response = await fetch('/api/auth/me')
+      const response = await fetch('/api/auth/me', {
+        credentials: 'include' // Include cookies in the request
+      })
       if (response.ok) {
         const data = await response.json()
         setUser(data)

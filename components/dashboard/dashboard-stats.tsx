@@ -30,8 +30,8 @@ export function DashboardStats() {
       
       // Fetch projects and tasks to calculate stats
       const [projectsResponse, tasksResponse] = await Promise.all([
-        fetch('/api/projects'),
-        fetch('/api/tasks')
+        fetch('/api/projects', { credentials: 'include' }),
+        fetch('/api/tasks', { credentials: 'include' })
       ])
 
       if (projectsResponse.ok && tasksResponse.ok) {

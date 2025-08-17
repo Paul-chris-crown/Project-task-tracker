@@ -60,6 +60,7 @@ export default function CreateProjectDialog({ isOpen, onClose }: CreateProjectDi
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include', // Include cookies in the request
         body: JSON.stringify({
           ...formData,
           startDate: formData.startDate ? new Date(formData.startDate) : null,

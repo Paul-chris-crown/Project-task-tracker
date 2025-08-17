@@ -67,6 +67,7 @@ export async function POST(request: NextRequest) {
       sameSite: 'lax' as const,
       maxAge: 60 * 60 * 24 * 7, // 7 days
       path: '/',
+      domain: undefined, // Let the browser set the domain
     }
     
     cookieStore.set('admin_auth', 'true', cookieOptions)

@@ -30,7 +30,9 @@ export default function ProjectTaskList({ projectId }: ProjectTaskListProps) {
 
   const fetchTasks = useCallback(async () => {
     try {
-      const response = await fetch(`/api/tasks?projectId=${projectId}`)
+      const response = await fetch(`/api/tasks?projectId=${projectId}`, {
+        credentials: 'include' // Include cookies in the request
+      })
       if (response.ok) {
         const data = await response.json()
         setTasks(data)
@@ -91,11 +93,12 @@ export default function ProjectTaskList({ projectId }: ProjectTaskListProps) {
 
   const updateTaskStatus = async (taskId: string, newStatus: string) => {
     try {
-      const response = await fetch(`/api/tasks/${taskId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus }),
-      })
+          const response = await fetch(`/api/tasks/${taskId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include', // Include cookies in the request
+      body: JSON.stringify({ status: newStatus }),
+    })
 
       if (response.ok) {
         toast({ title: 'Success', description: 'Task status updated' })
@@ -108,7 +111,10 @@ export default function ProjectTaskList({ projectId }: ProjectTaskListProps) {
 
   const deleteTask = async (taskId: string) => {
     try {
-      const response = await fetch(`/api/tasks/${taskId}`, { method: 'DELETE' })
+      const response = await fetch(`/api/tasks/${taskId}`, { 
+      method: 'DELETE',
+      credentials: 'include' // Include cookies in the request
+    })
       if (response.ok) {
         toast({ title: 'Success', description: 'Task deleted' })
         fetchTasks()
