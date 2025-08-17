@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
+import { prisma } from '@/lib/prisma'
 
 // Prevent this route from being processed during build time
 export const dynamic = 'force-dynamic'
@@ -33,28 +34,20 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Get allowed users from environment variable
-    const allowedUsersStr = process.env.ALLOWED_USERS || '[]'
-    let allowedUsers: Array<{ email: string; role: string }> = []
-    
-    try {
-      allowedUsers = JSON.parse(allowedUsersStr)
-    } catch (error) {
-      console.error('Failed to parse ALLOWED_USERS:', error)
-      // Fallback to a default admin user if parsing fails
-      allowedUsers = [{ email: 'adeofdefi@gmail.com', role: 'ADMIN' }]
-    }
+    // Check if user exists in database
+    let user = await prisma.user.findUnique({
+      where: { email: email.toLowerCase() }
+    })
 
-    // Check if email exists in allowed users list
-    const allowedUser = allowedUsers.find((user: { email: string; role: string }) => 
-      user.email.toLowerCase() === email.toLowerCase()
-    )
-
-    if (!allowedUser) {
-      return NextResponse.json(
-        { error: 'Email not authorized to access this application' },
-        { status: 403 }
-      )
+    // If user doesn't exist, create them as an admin
+    if (!user) {
+      user = await prisma.user.create({
+        data: {
+          email: email.toLowerCase(),
+          name: email.split('@')[0], // Use email prefix as name
+          role: 'ADMIN'
+        }
+      })
     }
 
     // Set secure cookie with user information
@@ -71,20 +64,20 @@ export async function POST(request: NextRequest) {
     }
     
     cookieStore.set('admin_auth', 'true', cookieOptions)
-    cookieStore.set('user_email', allowedUser.email, cookieOptions)
-    cookieStore.set('user_role', allowedUser.role, cookieOptions)
+    cookieStore.set('user_email', user.email, cookieOptions)
+    cookieStore.set('user_role', user.role, cookieOptions)
     
     console.log('Cookies set:', {
       admin_auth: 'true',
-      user_email: allowedUser.email,
-      user_role: allowedUser.role
+      user_email: user.email,
+      user_role: user.role
     })
 
     return NextResponse.json({ 
       success: true,
       user: {
-        email: allowedUser.email,
-        role: allowedUser.role
+        email: user.email,
+        role: user.role
       }
     })
   } catch (error) {

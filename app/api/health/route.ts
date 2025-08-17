@@ -9,7 +9,6 @@ export async function GET() {
       NODE_ENV: process.env.NODE_ENV,
       ADMIN_PASSWORD: process.env.ADMIN_PASSWORD ? 'Set' : 'Not set',
       DATABASE_URL: process.env.DATABASE_URL ? 'Set' : 'Not set',
-      ALLOWED_USERS: process.env.ALLOWED_USERS ? 'Set' : 'Not set',
     }
 
     let databaseStatus = 'Unknown'
