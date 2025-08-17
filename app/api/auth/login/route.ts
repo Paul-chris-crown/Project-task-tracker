@@ -59,29 +59,24 @@ export async function POST(request: NextRequest) {
 
     // Set secure cookie with user information
     const cookieStore = cookies()
-    cookieStore.set('admin_auth', 'true', {
+    
+    // Set cookies with proper configuration
+    const cookieOptions = {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      sameSite: 'lax' as const,
       maxAge: 60 * 60 * 24 * 7, // 7 days
       path: '/',
-    })
-
-    // Also store user email and role for future use
-    cookieStore.set('user_email', allowedUser.email, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7, // 7 days
-      path: '/',
-    })
-
-    cookieStore.set('user_role', allowedUser.role, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7, // 7 days
-      path: '/',
+    }
+    
+    cookieStore.set('admin_auth', 'true', cookieOptions)
+    cookieStore.set('user_email', allowedUser.email, cookieOptions)
+    cookieStore.set('user_role', allowedUser.role, cookieOptions)
+    
+    console.log('Cookies set:', {
+      admin_auth: 'true',
+      user_email: allowedUser.email,
+      user_role: allowedUser.role
     })
 
     return NextResponse.json({ 
