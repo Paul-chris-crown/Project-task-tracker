@@ -102,6 +102,39 @@ export default function AdminUsersPage() {
     }
   }
 
+  const changeUserRole = async (userId: string, newRole: string) => {
+    try {
+      const response = await fetch(`/api/admin/users/${userId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ role: newRole }),
+      })
+
+      if (response.ok) {
+        toast({
+          title: 'Success',
+          description: `User role updated to ${newRole}`,
+        })
+        fetchUsers() // Refresh the list
+      } else {
+        const errorData = await response.json()
+        toast({
+          title: 'Error',
+          description: errorData.error || 'Failed to update user role',
+          variant: 'destructive',
+        })
+      }
+    } catch (error) {
+      console.error('Error updating user role:', error)
+      toast({
+        title: 'Error',
+        description: 'Failed to update user role',
+        variant: 'destructive',
+      })
+    }
+  }
+
   const removeUser = async (userId: string) => {
     if (!confirm('Are you sure you want to remove this user? They will no longer be able to access the application.')) {
       return
@@ -245,11 +278,18 @@ export default function AdminUsersPage() {
                       </div>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <Badge
-                        variant={user.role === 'ADMIN' ? 'default' : 'secondary'}
+                      <Select
+                        value={user.role}
+                        onValueChange={(newRole) => changeUserRole(user.id, newRole)}
                       >
-                        {user.role}
-                      </Badge>
+                        <SelectTrigger className="w-24 h-8">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="MEMBER">Member</SelectItem>
+                          <SelectItem value="ADMIN">Admin</SelectItem>
+                        </SelectContent>
+                      </Select>
                       <Button
                         variant="outline"
                         size="sm"

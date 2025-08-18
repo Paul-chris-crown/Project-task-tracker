@@ -3,6 +3,3 @@ DATABASE_URL="postgresql://neondb_owner:npg_zN0YxB9dGtAT@ep-damp-poetry-adoyppw4
 
 # Admin Authentication
 ADMIN_PASSWORD="your-secure-admin-password-here"
-
-# Allowed Users (JSON array) - Only these emails can access the application
-ALLOWED_USERS='[{"email":"adeofdefi@gmail.com","role":"ADMIN"},{"email":"member@example.com","role":"MEMBER"}]'
