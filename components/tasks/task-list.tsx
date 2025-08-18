@@ -1,12 +1,13 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { CheckCircle, Clock, AlertTriangle } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { useAuth } from '@/hooks/use-auth'
+import { StatusFilter, StatusFilterOption } from '@/components/ui/status-filter'
 
 interface Task {
   id: string
@@ -25,6 +26,7 @@ export function TaskList() {
   const [updatingTaskId, setUpdatingTaskId] = useState<string | null>(null)
   const [tasks, setTasks] = useState<Task[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [selectedStatus, setSelectedStatus] = useState<string | null>(null)
 
   useEffect(() => {
     fetchTasks()
@@ -76,6 +78,40 @@ export function TaskList() {
   const canEditTask = (task: Task) => {
     return user && (user.role === 'ADMIN' || task.creator?.id === user.id)
   }
+
+  // Filter tasks based on selected status
+  const filteredTasks = useMemo(() => {
+    if (!selectedStatus) return tasks
+    return tasks.filter(task => task.status === selectedStatus)
+  }, [tasks, selectedStatus])
+
+  // Create filter options with counts
+  const filterOptions: StatusFilterOption[] = useMemo(() => [
+    {
+      value: 'TODO',
+      label: 'To Do',
+      color: 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 border-gray-200 dark:border-gray-600',
+      count: tasks.filter(t => t.status === 'TODO').length
+    },
+    {
+      value: 'IN_PROGRESS',
+      label: 'In Progress',
+      color: 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 border-blue-200 dark:border-blue-700',
+      count: tasks.filter(t => t.status === 'IN_PROGRESS').length
+    },
+    {
+      value: 'COMPLETED',
+      label: 'Completed',
+      color: 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 border-green-200 dark:border-green-700',
+      count: tasks.filter(t => t.status === 'COMPLETED').length
+    },
+    {
+      value: 'ON_HOLD',
+      label: 'On Hold',
+      color: 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 border-yellow-200 dark:border-yellow-700',
+      count: tasks.filter(t => t.status === 'ON_HOLD').length
+    }
+  ], [tasks])
 
   const updateTaskStatus = async (taskId: string, newStatus: string) => {
     try {
@@ -129,9 +165,44 @@ export function TaskList() {
     )
   }
 
+  if (filteredTasks.length === 0 && selectedStatus) {
+    return (
+      <div className="space-y-4">
+        {/* Status Filter */}
+        <StatusFilter
+          options={filterOptions}
+          selectedStatus={selectedStatus}
+          onStatusChange={setSelectedStatus}
+          title="Filter Tasks by Status"
+          showCounts={true}
+        />
+        
+        <Card className="text-center py-12 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+          <CardContent>
+            <CheckCircle className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500 mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No tasks with status &quot;{filterOptions.find(opt => opt.value === selectedStatus)?.label}&quot;</h3>
+            <p className="text-gray-500 dark:text-gray-400">
+              Try selecting a different status or clear the filter
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-4">
-      {tasks.map((task) => {
+      {/* Status Filter */}
+      <StatusFilter
+        options={filterOptions}
+        selectedStatus={selectedStatus}
+        onStatusChange={setSelectedStatus}
+        title="Filter Tasks by Status"
+        showCounts={true}
+      />
+
+      {/* Tasks List */}
+      {filteredTasks.map((task) => {
         const isOverdue = task.dueDate && new Date() > new Date(task.dueDate) && task.status !== 'COMPLETED'
         
         return (

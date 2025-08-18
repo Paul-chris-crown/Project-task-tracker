@@ -8,6 +8,7 @@ import { Progress } from '@/components/ui/progress'
 import { CheckCircle, Clock, AlertTriangle, FolderOpen, Users, Calendar, Edit } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { useAuth } from '@/hooks/use-auth'
+import { StatusFilter, StatusFilterOption } from '@/components/ui/status-filter'
 
 interface Project {
   id: string
@@ -37,6 +38,7 @@ export function ProjectBoardView() {
   const [isLoading, setIsLoading] = useState(true)
   const [draggedProject, setDraggedProject] = useState<Project | null>(null)
   const [editingProject, setEditingProject] = useState<Project | null>(null)
+  const [selectedStatus, setSelectedStatus] = useState<string | null>(null)
 
   useEffect(() => {
     fetchProjects()
@@ -60,6 +62,39 @@ export function ProjectBoardView() {
   const canEditProject = (project: Project) => {
     return user && (user.role === 'ADMIN' || project.owner.id === user.id)
   }
+
+  // Filter projects based on selected status
+  const filteredProjects = selectedStatus 
+    ? projects.filter(project => project.status === selectedStatus)
+    : projects
+
+  // Create filter options with counts
+  const filterOptions: StatusFilterOption[] = [
+    {
+      value: 'PLANNING',
+      label: 'Planning',
+      color: 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-200',
+      count: projects.filter(p => p.status === 'PLANNING').length
+    },
+    {
+      value: 'ACTIVE',
+      label: 'Active',
+      color: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-900/30 dark:text-blue-200',
+      count: projects.filter(p => p.status === 'ACTIVE').length
+    },
+    {
+      value: 'ON_HOLD',
+      label: 'On Hold',
+      color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-200',
+      count: projects.filter(p => p.status === 'ON_HOLD').length
+    },
+    {
+      value: 'COMPLETED',
+      label: 'Completed',
+      color: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-200',
+      count: projects.filter(p => p.status === 'COMPLETED').length
+    }
+  ]
 
   const updateProjectStatus = async (projectId: string, newStatus: string) => {
     try {
@@ -106,7 +141,7 @@ export function ProjectBoardView() {
   }
 
   const getProjectsByStatus = (status: string) => {
-    return projects.filter(project => project.status === status)
+    return filteredProjects.filter(project => project.status === status)
   }
 
   const calculateProgress = (project: Project) => {
@@ -178,10 +213,19 @@ export function ProjectBoardView() {
 
   return (
     <div className="space-y-6">
+      {/* Status Filter */}
+      <StatusFilter
+        options={filterOptions}
+        selectedStatus={selectedStatus}
+        onStatusChange={setSelectedStatus}
+        title="Filter Projects by Status"
+        showCounts={true}
+      />
+
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Project Board</h2>
         <Badge variant="secondary" className="text-sm">
-          {projects.length} total projects
+          {filteredProjects.length} {selectedStatus ? 'filtered' : 'total'} projects
         </Badge>
       </div>
 

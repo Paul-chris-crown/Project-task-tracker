@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { CheckCircle, Clock, AlertTriangle, Plus } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { useAuth } from '@/hooks/use-auth'
+import { StatusFilter, StatusFilterOption } from '@/components/ui/status-filter'
 
 interface Task {
   id: string
@@ -32,6 +33,7 @@ export function TaskBoardView() {
   const [tasks, setTasks] = useState<Task[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [draggedTask, setDraggedTask] = useState<Task | null>(null)
+  const [selectedStatus, setSelectedStatus] = useState<string | null>(null)
 
   useEffect(() => {
     fetchTasks()
@@ -55,6 +57,39 @@ export function TaskBoardView() {
   const canEditTask = (task: Task) => {
     return user && (user.role === 'ADMIN' || task.creator?.id === user.id)
   }
+
+  // Filter tasks based on selected status
+  const filteredTasks = selectedStatus 
+    ? tasks.filter(task => task.status === selectedStatus)
+    : tasks
+
+  // Create filter options with counts
+  const filterOptions: StatusFilterOption[] = [
+    {
+      value: 'TODO',
+      label: 'To Do',
+      color: 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-200',
+      count: tasks.filter(t => t.status === 'TODO').length
+    },
+    {
+      value: 'IN_PROGRESS',
+      label: 'In Progress',
+      color: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-200',
+      count: tasks.filter(t => t.status === 'IN_PROGRESS').length
+    },
+    {
+      value: 'ON_HOLD',
+      label: 'On Hold',
+      color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-200',
+      count: tasks.filter(t => t.status === 'ON_HOLD').length
+    },
+    {
+      value: 'COMPLETED',
+      label: 'Completed',
+      color: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-200',
+      count: tasks.filter(t => t.status === 'COMPLETED').length
+    }
+  ]
 
   const updateTaskStatus = async (taskId: string, newStatus: string) => {
     try {
@@ -101,7 +136,7 @@ export function TaskBoardView() {
   }
 
   const getTasksByStatus = (status: string) => {
-    return tasks.filter(task => task.status === status)
+    return filteredTasks.filter(task => task.status === status)
   }
 
   if (isLoading) {
@@ -128,10 +163,19 @@ export function TaskBoardView() {
 
   return (
     <div className="space-y-6">
+      {/* Status Filter */}
+      <StatusFilter
+        options={filterOptions}
+        selectedStatus={selectedStatus}
+        onStatusChange={setSelectedStatus}
+        title="Filter Tasks by Status"
+        showCounts={true}
+      />
+
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Task Board</h2>
         <Badge variant="secondary" className="text-sm">
-          {tasks.length} total tasks
+          {filteredTasks.length} {selectedStatus ? 'filtered' : 'total'} tasks
         </Badge>
       </div>
 

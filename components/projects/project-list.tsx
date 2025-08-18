@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -10,6 +10,7 @@ import { Edit, Trash2, Plus, FolderOpen } from 'lucide-react'
 import { DeleteProjectDialog } from './delete-project-dialog'
 import { EditProjectDialog } from './edit-project-dialog'
 import { useAuth } from '@/hooks/use-auth'
+import { StatusFilter, StatusFilterOption } from '@/components/ui/status-filter'
 
 interface Project {
   id: string
@@ -30,6 +31,7 @@ export function ProjectList({}: ProjectListProps) {
   const [editProject, setEditProject] = useState<Project | null>(null)
   const [projects, setProjects] = useState<Project[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [selectedStatus, setSelectedStatus] = useState<string | null>(null)
 
   useEffect(() => {
     fetchProjects()
@@ -98,6 +100,40 @@ export function ProjectList({}: ProjectListProps) {
     fetchProjects() // Refresh the list
   }
 
+  // Filter projects based on selected status
+  const filteredProjects = useMemo(() => {
+    if (!selectedStatus) return projects
+    return projects.filter(project => project.status === selectedStatus)
+  }, [projects, selectedStatus])
+
+  // Create filter options with counts
+  const filterOptions: StatusFilterOption[] = useMemo(() => [
+    {
+      value: 'ACTIVE',
+      label: 'Active',
+      color: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-200',
+      count: projects.filter(p => p.status === 'ACTIVE').length
+    },
+    {
+      value: 'COMPLETED',
+      label: 'Completed',
+      color: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-200',
+      count: projects.filter(p => p.status === 'COMPLETED').length
+    },
+    {
+      value: 'ON_HOLD',
+      label: 'On Hold',
+      color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-200',
+      count: projects.filter(p => p.status === 'ON_HOLD').length
+    },
+    {
+      value: 'CANCELLED',
+      label: 'Cancelled',
+      color: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-200',
+      count: projects.filter(p => p.status === 'CANCELLED').length
+    }
+  ], [projects])
+
   const canEditProject = (project: Project) => {
     return user && (user.role === 'ADMIN' || project.owner.email === user.email)
   }
@@ -119,9 +155,39 @@ export function ProjectList({}: ProjectListProps) {
     )
   }
 
+  if (filteredProjects.length === 0 && selectedStatus) {
+    return (
+      <div className="space-y-4">
+        {/* Status Filter */}
+        <StatusFilter
+          options={filterOptions}
+          selectedStatus={selectedStatus}
+          onStatusChange={setSelectedStatus}
+          title="Filter Projects by Status"
+          showCounts={true}
+        />
+        
+        <div className="text-center py-8">
+          <div className="text-gray-500 dark:text-gray-400 mb-4">No projects with status &quot;{filterOptions.find(opt => opt.value === selectedStatus)?.label}&quot;</div>
+          <p className="text-sm text-gray-400 dark:text-gray-500">Try selecting a different status or clear the filter</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-4">
-      {projects.map((project) => (
+      {/* Status Filter */}
+      <StatusFilter
+        options={filterOptions}
+        selectedStatus={selectedStatus}
+        onStatusChange={setSelectedStatus}
+        title="Filter Projects by Status"
+        showCounts={true}
+      />
+
+      {/* Projects List */}
+      {filteredProjects.map((project) => (
         <Card key={project.id} className="hover:shadow-md transition-shadow bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
           <CardHeader className="pb-3">
             <div className="flex items-start justify-between">
