@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
         createdById: user.id,
       },
       include: {
-        project: true,
+        project: { include: { owner: true } },
         assignee: true,
         creator: true,
       },
@@ -123,7 +123,7 @@ export async function GET(request: NextRequest) {
     const tasks = await prisma.task.findMany({
       where: whereClause,
       include: {
-        project: true,
+        project: { include: { owner: true } },
         assignee: true,
         creator: true,
       },

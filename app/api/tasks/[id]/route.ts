@@ -70,7 +70,7 @@ export async function PATCH(
       where: { id: params.id },
       data: validatedData,
       include: {
-        project: true,
+        project: { include: { owner: true } },
         assignee: true,
         creator: true,
       },
