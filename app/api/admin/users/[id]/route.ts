@@ -55,34 +55,22 @@ export async function PATCH(
       )
     }
 
-    // Prevent changing the primary admin's role (first admin in the system)
+    // Prevent changing the primary admin's role (adeofdefi@gmail.com)
     if (role && role !== existingUser.role) {
-      const allUsers = await prisma.user.findMany({
-        where: { role: 'ADMIN' },
-        orderBy: { createdAt: 'asc' }
-      })
-      
-      // If this is the first admin and there's only one admin, prevent role change
-      if (allUsers.length === 1 && allUsers[0].id === existingUser.id) {
+      // Check if this is the primary admin email
+      if (existingUser.email === 'adeofdefi@gmail.com') {
         return NextResponse.json(
-          { error: 'Cannot change the role of the primary admin. At least one admin must remain in the system.' },
+          { error: 'Cannot change the role of the primary admin (adeofdefi@gmail.com). This account is protected.' },
           { status: 400 }
         )
       }
       
-      // If this is the first admin and there are multiple admins, allow role change
-      // but only if the current user is not the first admin
-      if (allUsers.length > 1 && allUsers[0].id === existingUser.id) {
-        const currentUser = await prisma.user.findUnique({
-          where: { email: userEmail.value }
-        })
-        
-        if (currentUser && currentUser.id === allUsers[0].id) {
-          return NextResponse.json(
-            { error: 'Cannot change your own role if you are the primary admin. Ask another admin to do this for you.' },
-            { status: 400 }
-          )
-        }
+      // Check if current user is trying to change their own role
+      if (existingUser.email === userEmail.value) {
+        return NextResponse.json(
+          { error: 'Cannot change your own role. Ask another admin to do this for you.' },
+          { status: 400 }
+        )
       }
     }
 
@@ -145,10 +133,18 @@ export async function DELETE(
       )
     }
 
-    // Prevent admin from deleting themselves
+    // Prevent admin from deleting themselves or the primary admin
     if (existingUser.email === userEmail.value) {
       return NextResponse.json(
         { error: 'Cannot delete your own account' },
+        { status: 400 }
+      )
+    }
+    
+    // Prevent deletion of the primary admin
+    if (existingUser.email === 'adeofdefi@gmail.com') {
+      return NextResponse.json(
+        { error: 'Cannot delete the primary admin account (adeofdefi@gmail.com). This account is protected.' },
         { status: 400 }
       )
     }

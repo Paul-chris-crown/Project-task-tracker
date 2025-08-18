@@ -295,7 +295,7 @@ export default function AdminUsersPage() {
                       <div>
                         <div className="flex items-center space-x-2">
                           <p className="font-medium text-gray-900 dark:text-white">{user.email}</p>
-                          {users.findIndex(u => u.id === user.id) === 0 && user.role === 'ADMIN' && (
+                          {user.email === 'adeofdefi@gmail.com' && user.role === 'ADMIN' && (
                             <Badge variant="outline" className="text-xs bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:text-amber-300 dark:border-amber-700">
                               Primary Admin
                             </Badge>
@@ -307,13 +307,13 @@ export default function AdminUsersPage() {
                       </div>
                     </div>
                     <div className="flex items-center space-x-2">
-                      {user.email === currentUser?.email ? (
+                      {user.email === currentUser?.email || user.email === 'adeofdefi@gmail.com' ? (
                         <div className="flex items-center space-x-2">
                           <Badge variant="secondary" className="text-xs">
                             {user.role}
                           </Badge>
                           <span className="text-xs text-amber-600 dark:text-amber-400">
-                            (You - cannot edit)
+                            {user.email === currentUser?.email ? '(You - cannot edit)' : '(Primary Admin - protected)'}
                           </span>
                         </div>
                       ) : (
@@ -331,13 +331,13 @@ export default function AdminUsersPage() {
                         </Select>
                       )}
                       
-                      {user.email === currentUser?.email ? (
+                      {user.email === currentUser?.email || user.email === 'adeofdefi@gmail.com' ? (
                         <Button
                           variant="outline"
                           size="sm"
                           disabled
                           className="text-gray-400 dark:text-gray-500 cursor-not-allowed"
-                          title="Cannot delete your own account"
+                          title={user.email === currentUser?.email ? "Cannot delete your own account" : "Cannot delete the primary admin account"}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
