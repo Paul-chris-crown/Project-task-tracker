@@ -9,6 +9,7 @@ interface DashboardStats {
   totalTasks: number
   completedTasks: number
   overdueTasks: number
+  assignedTasks: number
 }
 
 export function DashboardStats() {
@@ -17,6 +18,7 @@ export function DashboardStats() {
     totalTasks: 0,
     completedTasks: 0,
     overdueTasks: 0,
+    assignedTasks: 0,
   })
   const [isLoading, setIsLoading] = useState(true)
 
@@ -28,15 +30,17 @@ export function DashboardStats() {
     try {
       setIsLoading(true)
       
-      // Fetch projects and tasks to calculate stats
-      const [projectsResponse, tasksResponse] = await Promise.all([
+      // Fetch projects, tasks, and user info to calculate stats
+      const [projectsResponse, tasksResponse, userResponse] = await Promise.all([
         fetch('/api/projects', { credentials: 'include' }),
-        fetch('/api/tasks', { credentials: 'include' })
+        fetch('/api/tasks', { credentials: 'include' }),
+        fetch('/api/auth/me', { credentials: 'include' })
       ])
 
-      if (projectsResponse.ok && tasksResponse.ok) {
+      if (projectsResponse.ok && tasksResponse.ok && userResponse.ok) {
         const projects = await projectsResponse.json()
         const tasks = await tasksResponse.json()
+        const user = await userResponse.json()
         
         const completedTasks = tasks.filter((task: any) => task.status === 'COMPLETED').length
         const overdueTasks = tasks.filter((task: any) => {
@@ -49,6 +53,7 @@ export function DashboardStats() {
           totalTasks: tasks.length,
           completedTasks,
           overdueTasks,
+          assignedTasks: user.assignedTaskCount || 0,
         })
       }
     } catch (error) {
@@ -79,6 +84,13 @@ export function DashboardStats() {
       description: 'Tasks completed',
       icon: CheckCircle,
       color: 'text-emerald-600',
+    },
+    {
+      title: 'Assigned',
+      value: stats.assignedTasks.toString(),
+      description: 'Your tasks in progress',
+      icon: Clock,
+      color: 'text-blue-600',
     },
     {
       title: 'Overdue',

@@ -25,11 +25,13 @@ export function RecentTasks() {
   const fetchRecentTasks = async () => {
     try {
       setIsLoading(true)
-      const response = await fetch('/api/tasks')
+      // Fetch user's assigned tasks (tasks in progress)
+      const response = await fetch('/api/auth/me', { credentials: 'include' })
       if (response.ok) {
-        const data = await response.json()
-        // Get the 5 most recent tasks
-        const recentTasks = data
+        const user = await response.json()
+        // Get the 5 most recent assigned tasks (in progress)
+        const assignedTasks = user.assignedTasks || []
+        const recentTasks = assignedTasks
           .sort((a: Task, b: Task) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
           .slice(0, 5)
         setTasks(recentTasks)
@@ -106,7 +108,7 @@ export function RecentTasks() {
         </CardHeader>
         <CardContent>
           <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-            No tasks found. Create your first task to get started.
+            No tasks in progress. Start working on a task to see it here.
           </div>
         </CardContent>
       </Card>
@@ -116,8 +118,8 @@ export function RecentTasks() {
   return (
     <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
       <CardHeader>
-        <CardTitle className="text-gray-900 dark:text-white">Recent Tasks</CardTitle>
-        <CardDescription className="text-gray-600 dark:text-gray-300">Your latest tasks and their current status</CardDescription>
+        <CardTitle className="text-gray-900 dark:text-white">My Assigned Tasks</CardTitle>
+        <CardDescription className="text-gray-600 dark:text-gray-300">Your tasks currently in progress</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
