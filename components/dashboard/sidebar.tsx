@@ -34,6 +34,7 @@ export function Sidebar() {
     { name: 'Tasks', href: '/dashboard/tasks', icon: CheckSquare, show: true },
     { name: 'Stats Dashboard', href: '/dashboard/stats', icon: Users, show: true },
     { name: 'User Management', href: '/admin/users', icon: Shield, show: user?.role === 'ADMIN' },
+    { name: 'Allowed Users', href: '/admin/allowed-users', icon: Shield, show: user?.role === 'ADMIN' },
     { name: 'Settings', href: '/dashboard/settings', icon: Settings, show: true },
   ]
 
