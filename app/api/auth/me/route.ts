@@ -39,7 +39,14 @@ export async function GET() {
           },
         },
         createdTasks: true,
-        assignedTasks: true,
+        assignedTasks: {
+          where: {
+            status: 'IN_PROGRESS',
+          },
+          include: {
+            project: true,
+          },
+        },
       },
     })
     
@@ -56,8 +63,16 @@ export async function GET() {
               tasks: true,
             },
           },
-          createdTasks: true,
-          assignedTasks: true,
+          createdTasks: {
+            include: {
+              project: true,
+            },
+          },
+                  assignedTasks: {
+          include: {
+            project: true,
+          },
+        },
         },
       })
     }
@@ -67,7 +82,7 @@ export async function GET() {
       ...user,
       projectCount: user.ownedProjects.length,
       taskCount: user.createdTasks.length,
-      assignedTaskCount: user.assignedTasks.length,
+              assignedTaskCount: user.assignedTasks.length,
     }
 
     return NextResponse.json(userWithStats)

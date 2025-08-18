@@ -60,11 +60,7 @@ export async function GET(request: NextRequest) {
               project: true,
             },
           },
-          assignedTasks: {
-            include: {
-              project: true,
-            },
-          },
+          // We'll calculate assigned tasks as created tasks with IN_PROGRESS status
         },
         orderBy: {
           createdAt: 'desc',
@@ -99,11 +95,7 @@ export async function GET(request: NextRequest) {
               project: true,
             },
           },
-          assignedTasks: {
-            include: {
-              project: true,
-            },
-          },
+          // We'll calculate assigned tasks as created tasks with IN_PROGRESS status
         },
         orderBy: {
           createdAt: 'desc',
@@ -134,7 +126,7 @@ export async function GET(request: NextRequest) {
       role: user.role,
       projectCount: user.ownedProjects.length,
       taskCount: user.createdTasks.length,
-      assignedTaskCount: user.assignedTasks.length,
+      assignedTaskCount: user.createdTasks.filter(task => task.status === 'IN_PROGRESS').length,
       // Include actual project objects for detailed display
       ownedProjects: user.ownedProjects.map(project => ({
         id: project.id,
@@ -161,18 +153,20 @@ export async function GET(request: NextRequest) {
         projectName: task.project?.name || 'Unknown Project',
         projectId: task.project?.id,
       })),
-      // Include assigned tasks for detailed display
-      assignedTasks: user.assignedTasks.map(task => ({
-        id: task.id,
-        title: task.title,
-        status: task.status,
-        description: task.description,
-        dueDate: task.dueDate,
-        createdAt: task.createdAt,
-        updatedAt: task.updatedAt,
-        projectName: task.project?.name || 'Unknown Project',
-        projectId: task.project?.id,
-      })),
+      // Include assigned tasks (created tasks with IN_PROGRESS status) for detailed display
+      assignedTasks: user.createdTasks
+        .filter(task => task.status === 'IN_PROGRESS')
+        .map(task => ({
+          id: task.id,
+          title: task.title,
+          status: task.status,
+          description: task.description,
+          dueDate: task.dueDate,
+          createdAt: task.createdAt,
+          updatedAt: task.updatedAt,
+          projectName: task.project?.name || 'Unknown Project',
+          projectId: task.project?.id,
+        })),
     }))
 
     // Calculate organization-wide stats

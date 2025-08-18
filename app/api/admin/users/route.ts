@@ -42,11 +42,7 @@ export async function GET() {
             project: true,
           },
         },
-        assignedTasks: {
-          include: {
-            project: true,
-          },
-        },
+                  // We'll calculate assigned tasks as created tasks with IN_PROGRESS status
       },
       orderBy: {
         createdAt: 'desc',
@@ -58,7 +54,7 @@ export async function GET() {
       ...user,
       projectCount: user.ownedProjects.length,
       taskCount: user.createdTasks.length,
-      assignedTaskCount: user.assignedTasks.length,
+              assignedTaskCount: (user as any).createdTasks.filter((task: any) => task.status === 'IN_PROGRESS').length,
     }))
 
     return NextResponse.json(usersWithStats)

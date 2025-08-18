@@ -247,9 +247,9 @@ export function TeamStats() {
                         </div>
                       ))
                     ) : (
-                      <div className="text-sm text-gray-500 dark:text-gray-400 text-center py-2">
-                        No tasks assigned
-                      </div>
+                                              <div className="text-sm text-gray-500 dark:text-gray-400 text-center py-2">
+                          No tasks in progress
+                        </div>
                     )}
                   </div>
                 </TabsContent>
