@@ -47,20 +47,31 @@ interface Project {
 
 export default function ProjectPage({ params }: ProjectPageProps) {
   const [project, setProject] = useState<Project | null>(null)
+  const [currentUser, setCurrentUser] = useState<{ email: string; role: string } | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    const fetchProject = async () => {
+    const fetchData = async () => {
       try {
-        const response = await fetch(`/api/projects/${params.id}`)
-        if (response.ok) {
-          const data = await response.json()
-          setProject(data)
-        } else if (response.status === 404) {
+        // Fetch project and user info in parallel
+        const [projectResponse, userResponse] = await Promise.all([
+          fetch(`/api/projects/${params.id}`),
+          fetch('/api/auth/me', { credentials: 'include' })
+        ])
+
+        if (projectResponse.ok) {
+          const projectData = await projectResponse.json()
+          setProject(projectData)
+        } else if (projectResponse.status === 404) {
           notFound()
         } else {
           setError('Failed to fetch project')
+        }
+
+        if (userResponse.ok) {
+          const userData = await userResponse.json()
+          setCurrentUser(userData)
         }
       } catch (err) {
         setError('Failed to fetch project')
@@ -69,7 +80,7 @@ export default function ProjectPage({ params }: ProjectPageProps) {
       }
     }
 
-    fetchProject()
+    fetchData()
   }, [params.id])
 
   if (loading) {
@@ -112,10 +123,19 @@ export default function ProjectPage({ params }: ProjectPageProps) {
 
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Tasks</h2>
-        <CreateTaskButton projectId={project.id} />
+        <CreateTaskButton 
+          projectId={project.id} 
+          currentUserEmail={currentUser?.email}
+          currentUserRole={currentUser?.role}
+          projectOwnerEmail={project.owner.email}
+        />
       </div>
 
-      <ProjectTaskList projectId={project.id} />
+      <ProjectTaskList 
+        projectId={project.id} 
+        currentUserEmail={currentUser?.email}
+        currentUserRole={currentUser?.role}
+      />
     </div>
   )
 }

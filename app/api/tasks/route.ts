@@ -53,6 +53,27 @@ export async function POST(request: NextRequest) {
       })
     }
 
+    // Check if the user owns the project
+    const project = await prisma.project.findUnique({
+      where: { id: validatedData.projectId },
+      include: { owner: true }
+    })
+
+    if (!project) {
+      return NextResponse.json(
+        { error: 'Project not found' },
+        { status: 404 }
+      )
+    }
+
+    // Only project owners can create tasks
+    if (project.owner.email !== userEmail.value && userRole.value !== 'ADMIN') {
+      return NextResponse.json(
+        { error: 'You can only create tasks in projects you own' },
+        { status: 403 }
+      )
+    }
+
     // Create the task in the database
     const task = await prisma.task.create({
       data: {

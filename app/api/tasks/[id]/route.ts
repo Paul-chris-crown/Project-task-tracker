@@ -27,7 +27,7 @@ export async function PATCH(
     // Check if task exists and get creator info
     const task = await prisma.task.findUnique({
       where: { id: params.id },
-      include: { creator: true, project: true }
+      include: { creator: true, project: { include: { owner: true } } }
     })
 
     if (!task) {
@@ -48,12 +48,11 @@ export async function PATCH(
       )
     }
 
-    // Check if user has permission to edit (creator, assignee, or admin)
+    // Check if user has permission to edit (project owner or admin)
     if (userRole.value !== 'ADMIN' && 
-        task.creator.email !== userEmail.value && 
-        task.assigneeId !== userEmail.value) {
+        task.project.owner.email !== userEmail.value) {
       return NextResponse.json(
-        { error: 'You can only edit tasks you created or are assigned to' },
+        { error: 'You can only edit tasks in projects you own' },
         { status: 403 }
       )
     }
@@ -106,7 +105,7 @@ export async function DELETE(
     // Check if task exists and get creator info
     const task = await prisma.task.findUnique({
       where: { id: params.id },
-      include: { creator: true, project: true }
+      include: { creator: true, project: { include: { owner: true } } }
     })
 
     if (!task) {
@@ -127,10 +126,10 @@ export async function DELETE(
       )
     }
 
-    // Check if user has permission to delete (creator or admin)
-    if (userRole.value !== 'ADMIN' && task.creator.email !== userEmail.value) {
+    // Check if user has permission to delete (project owner or admin)
+    if (userRole.value !== 'ADMIN' && task.project.owner.email !== userEmail.value) {
       return NextResponse.json(
-        { error: 'You can only delete tasks you created' },
+        { error: 'You can only delete tasks in projects you own' },
         { status: 403 }
       )
     }

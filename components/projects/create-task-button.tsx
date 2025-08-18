@@ -7,10 +7,20 @@ import CreateTaskDialog from './create-task-dialog'
 
 interface CreateTaskButtonProps {
   projectId: string
+  currentUserEmail?: string
+  currentUserRole?: string
+  projectOwnerEmail?: string
 }
 
-export default function CreateTaskButton({ projectId }: CreateTaskButtonProps) {
+export default function CreateTaskButton({ projectId, currentUserEmail, currentUserRole, projectOwnerEmail }: CreateTaskButtonProps) {
   const [isOpen, setIsOpen] = useState(false)
+
+  // Check if current user can create tasks in this project
+  const canCreateTasks = currentUserRole === 'ADMIN' || currentUserEmail === projectOwnerEmail
+
+  if (!canCreateTasks) {
+    return null
+  }
 
   return (
     <>

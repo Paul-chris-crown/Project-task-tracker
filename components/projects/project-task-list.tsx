@@ -15,18 +15,31 @@ interface Task {
   description: string | null
   status: string
   dueDate: string | null
+  project: {
+    owner: {
+      email: string
+    }
+  }
 }
 
 interface ProjectTaskListProps {
   projectId: string
+  currentUserEmail?: string
+  currentUserRole?: string
 }
 
-export default function ProjectTaskList({ projectId }: ProjectTaskListProps) {
+export default function ProjectTaskList({ projectId, currentUserEmail, currentUserRole }: ProjectTaskListProps) {
   const { toast } = useToast()
   const [tasks, setTasks] = useState<Task[]>([])
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [editingTask, setEditingTask] = useState<Task | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+
+  // Check if current user can manage tasks in this project
+  const canManageTasks = (task: Task) => {
+    if (currentUserRole === 'ADMIN') return true
+    return task.project.owner.email === currentUserEmail
+  }
 
   const fetchTasks = useCallback(async () => {
     try {
@@ -184,10 +197,12 @@ export default function ProjectTaskList({ projectId }: ProjectTaskListProps) {
       {/* Task List */}
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Tasks</h2>
-        <Button onClick={() => setIsCreateDialogOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Add Task
-        </Button>
+        {currentUserRole === 'ADMIN' || tasks.some(task => canManageTasks(task)) ? (
+          <Button onClick={() => setIsCreateDialogOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Task
+          </Button>
+        ) : null}
       </div>
 
       {tasks.length === 0 ? (
@@ -224,32 +239,40 @@ export default function ProjectTaskList({ projectId }: ProjectTaskListProps) {
                   </div>
 
                   <div className="flex items-center gap-2 ml-4">
-                    <select
-                      value={task.status}
-                      onChange={(e) => updateTaskStatus(task.id, e.target.value)}
-                      className="text-sm border border-gray-300 dark:border-gray-600 rounded px-2 py-1 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                    >
-                      <option value="TODO" className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">To Do</option>
-                      <option value="IN_PROGRESS" className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">In Progress</option>
-                      <option value="COMPLETED" className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">Completed</option>
-                      <option value="ON_HOLD" className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">On Hold</option>
-                    </select>
-                    
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setEditingTask(task)}
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => deleteTask(task.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    {canManageTasks(task) ? (
+                      <>
+                        <select
+                          value={task.status}
+                          onChange={(e) => updateTaskStatus(task.id, e.target.value)}
+                          className="text-sm border border-gray-300 dark:border-gray-600 rounded px-2 py-1 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                        >
+                          <option value="TODO" className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">To Do</option>
+                          <option value="IN_PROGRESS" className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">In Progress</option>
+                          <option value="COMPLETED" className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">Completed</option>
+                          <option value="ON_HOLD" className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">On Hold</option>
+                        </select>
+                        
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setEditingTask(task)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => deleteTask(task.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </>
+                    ) : (
+                      <Badge variant="secondary" className="text-xs">
+                        Read Only
+                      </Badge>
+                    )}
                   </div>
                 </div>
               </CardContent>
