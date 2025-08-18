@@ -25,6 +25,7 @@ export default function AdminUsersPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [isAdding, setIsAdding] = useState(false)
   const [newUser, setNewUser] = useState({ name: '', email: '', role: 'MEMBER' })
+  const [currentUser, setCurrentUser] = useState<{ email: string; role: string } | null>(null)
 
   const fetchUsers = useCallback(async () => {
     try {
@@ -50,7 +51,22 @@ export default function AdminUsersPage() {
 
   useEffect(() => {
     fetchUsers()
+    fetchCurrentUser()
   }, [fetchUsers])
+
+  const fetchCurrentUser = async () => {
+    try {
+      const response = await fetch('/api/auth/me', {
+        credentials: 'include'
+      })
+      if (response.ok) {
+        const userData = await response.json()
+        setCurrentUser(userData)
+      }
+    } catch (error) {
+      console.error('Failed to fetch current user:', error)
+    }
+  }
 
   const addUser = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -174,6 +190,9 @@ export default function AdminUsersPage() {
           <p className="text-sm text-amber-600 dark:text-amber-400 mt-1">
             💡 <strong>Note:</strong> Only users added here can log in to the system. Make sure to add at least one admin user first.
           </p>
+          <p className="text-sm text-red-600 dark:text-red-400 mt-1">
+            ⚠️ <strong>Security:</strong> Admins cannot edit their own roles. Primary admin is protected from accidental role changes.
+          </p>
         </div>
       </div>
 
@@ -274,33 +293,64 @@ export default function AdminUsersPage() {
                         </span>
                       </div>
                       <div>
-                        <p className="font-medium text-gray-900 dark:text-white">{user.email}</p>
+                        <div className="flex items-center space-x-2">
+                          <p className="font-medium text-gray-900 dark:text-white">{user.email}</p>
+                          {users.findIndex(u => u.id === user.id) === 0 && user.role === 'ADMIN' && (
+                            <Badge variant="outline" className="text-xs bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:text-amber-300 dark:border-amber-700">
+                              Primary Admin
+                            </Badge>
+                          )}
+                        </div>
                         <p className="text-sm text-gray-500 dark:text-gray-400">
                           Added {new Date(user.createdAt).toLocaleDateString()}
                         </p>
                       </div>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <Select
-                        value={user.role}
-                        onValueChange={(newRole) => changeUserRole(user.id, newRole)}
-                      >
-                        <SelectTrigger className="w-24 h-8">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="MEMBER">Member</SelectItem>
-                          <SelectItem value="ADMIN">Admin</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => removeUser(user.id)}
-                        className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      {user.email === currentUser?.email ? (
+                        <div className="flex items-center space-x-2">
+                          <Badge variant="secondary" className="text-xs">
+                            {user.role}
+                          </Badge>
+                          <span className="text-xs text-amber-600 dark:text-amber-400">
+                            (You - cannot edit)
+                          </span>
+                        </div>
+                      ) : (
+                        <Select
+                          value={user.role}
+                          onValueChange={(newRole) => changeUserRole(user.id, newRole)}
+                        >
+                          <SelectTrigger className="w-24 h-8">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="MEMBER">Member</SelectItem>
+                            <SelectItem value="ADMIN">Admin</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      )}
+                      
+                      {user.email === currentUser?.email ? (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled
+                          className="text-gray-400 dark:text-gray-500 cursor-not-allowed"
+                          title="Cannot delete your own account"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      ) : (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => removeUser(user.id)}
+                          className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
                     </div>
                   </div>
                 ))}

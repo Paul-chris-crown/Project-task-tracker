@@ -47,6 +47,45 @@ export async function PATCH(
       )
     }
 
+    // Prevent admin from editing their own role
+    if (existingUser.email === userEmail.value && role && role !== existingUser.role) {
+      return NextResponse.json(
+        { error: 'Cannot change your own role. Ask another admin to do this for you.' },
+        { status: 400 }
+      )
+    }
+
+    // Prevent changing the primary admin's role (first admin in the system)
+    if (role && role !== existingUser.role) {
+      const allUsers = await prisma.user.findMany({
+        where: { role: 'ADMIN' },
+        orderBy: { createdAt: 'asc' }
+      })
+      
+      // If this is the first admin and there's only one admin, prevent role change
+      if (allUsers.length === 1 && allUsers[0].id === existingUser.id) {
+        return NextResponse.json(
+          { error: 'Cannot change the role of the primary admin. At least one admin must remain in the system.' },
+          { status: 400 }
+        )
+      }
+      
+      // If this is the first admin and there are multiple admins, allow role change
+      // but only if the current user is not the first admin
+      if (allUsers.length > 1 && allUsers[0].id === existingUser.id) {
+        const currentUser = await prisma.user.findUnique({
+          where: { email: userEmail.value }
+        })
+        
+        if (currentUser && currentUser.id === allUsers[0].id) {
+          return NextResponse.json(
+            { error: 'Cannot change your own role if you are the primary admin. Ask another admin to do this for you.' },
+            { status: 400 }
+          )
+        }
+      }
+    }
+
     // Update user in database
     const updatedUser = await prisma.user.update({
       where: { id: params.id },
