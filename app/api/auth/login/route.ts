@@ -39,15 +39,12 @@ export async function POST(request: NextRequest) {
       where: { email: email.toLowerCase() }
     })
 
-    // If user doesn't exist, create them as a member (not admin by default)
+    // Only allow login if user has been explicitly added by an admin
     if (!user) {
-      user = await prisma.user.create({
-        data: {
-          email: email.toLowerCase(),
-          name: email.split('@')[0], // Use email prefix as name
-          role: 'MEMBER' // Default to member role for security
-        }
-      })
+      return NextResponse.json(
+        { error: 'Email not authorized. Please contact an administrator to add your email to the system.' },
+        { status: 403 }
+      )
     }
 
     // Set secure cookie with user information

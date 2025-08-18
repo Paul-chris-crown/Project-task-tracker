@@ -170,7 +170,10 @@ export default function AdminUsersPage() {
         <Shield className="h-8 w-8 text-blue-600 dark:text-blue-400" />
         <div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">User Management</h1>
-          <p className="text-gray-600 dark:text-gray-300">Manage who can access the Task Tracker application</p>
+          <p className="text-gray-600 dark:text-gray-300">Control access to the Task Tracker application by managing user accounts</p>
+          <p className="text-sm text-amber-600 dark:text-amber-400 mt-1">
+            💡 <strong>Note:</strong> Only users added here can log in to the system. Make sure to add at least one admin user first.
+          </p>
         </div>
       </div>
 
@@ -182,9 +185,9 @@ export default function AdminUsersPage() {
               <Plus className="h-5 w-5" />
               <span>Add New User</span>
             </CardTitle>
-            <CardDescription className="text-gray-600 dark:text-gray-300">
-              Add a new email address to the allowed users list
-            </CardDescription>
+                      <CardDescription className="text-gray-600 dark:text-gray-300">
+            Add new users who will be able to access the Task Tracker application
+          </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={addUser} className="space-y-4">
@@ -241,10 +244,10 @@ export default function AdminUsersPage() {
           <CardHeader>
             <CardTitle className="flex items-center space-x-2 text-gray-900 dark:text-white">
               <Users className="h-5 w-5" />
-              <span>Allowed Users ({users.length})</span>
+              <span>System Users ({users.length})</span>
             </CardTitle>
             <CardDescription className="text-gray-600 dark:text-gray-300">
-              Users who are authorized to access the application
+              Users who have access to the Task Tracker application
             </CardDescription>
           </CardHeader>
           <CardContent>
