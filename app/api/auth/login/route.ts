@@ -34,19 +34,49 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Get authorized users from environment variable
+    const allowedUsersStr = process.env.ALLOWED_USERS || '[]'
+    let allowedUsers: Array<{ email: string; role: string }> = []
+    
+    try {
+      allowedUsers = JSON.parse(allowedUsersStr)
+    } catch (error) {
+      console.error('Failed to parse ALLOWED_USERS:', error)
+      // Fallback to a default admin user if parsing fails
+      allowedUsers = [{ email: 'adeofdefi@gmail.com', role: 'ADMIN' }]
+    }
+
+    // Check if email is authorized
+    const allowedUser = allowedUsers.find((user: { email: string; role: string }) => 
+      user.email.toLowerCase() === email.toLowerCase()
+    )
+
+    if (!allowedUser) {
+      return NextResponse.json(
+        { error: 'Email not authorized to access this application' },
+        { status: 403 }
+      )
+    }
+
     // Check if user exists in database
     let user = await prisma.user.findUnique({
       where: { email: email.toLowerCase() }
     })
 
-    // If user doesn't exist, create them as an admin
+    // If user doesn't exist, create them with their authorized role
     if (!user) {
       user = await prisma.user.create({
         data: {
           email: email.toLowerCase(),
           name: email.split('@')[0], // Use email prefix as name
-          role: 'ADMIN'
+          role: allowedUser.role // Use the role from ALLOWED_USERS
         }
+      })
+    } else {
+      // Update existing user's role to match their authorized role
+      user = await prisma.user.update({
+        where: { email: email.toLowerCase() },
+        data: { role: allowedUser.role }
       })
     }
 
