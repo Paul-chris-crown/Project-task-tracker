@@ -42,8 +42,8 @@ export function UserProfile() {
       
       // Fetch projects and tasks to calculate statistics
       const [projectsResponse, tasksResponse] = await Promise.all([
-        fetch('/api/projects'),
-        fetch('/api/tasks')
+        fetch('/api/projects', { credentials: 'include' }),
+        fetch('/api/tasks', { credentials: 'include' })
       ])
 
       if (projectsResponse.ok && tasksResponse.ok) {
@@ -61,10 +61,10 @@ export function UserProfile() {
         const userStats: UserStats = {
           projectsOwned: projects.filter((p: any) => p?.owner?.id === user.id).length,
           tasksCreated: tasks.filter((t: any) => t?.creator?.id === user.id).length,
-          tasksAssigned: tasks.filter((t: any) => t?.assignee?.id === user.id).length,
-          tasksCompleted: tasks.filter((t: any) => t?.assignee?.id === user.id && t?.status === 'COMPLETED').length,
-          tasksInProgress: tasks.filter((t: any) => t?.assignee?.id === user.id && t?.status === 'IN_PROGRESS').length,
-          tasksTodo: tasks.filter((t: any) => t?.assignee?.id === user.id && t?.status === 'TODO').length
+          tasksAssigned: tasks.filter((t: any) => t?.creator?.id === user.id && t?.status === 'IN_PROGRESS').length,
+          tasksCompleted: tasks.filter((t: any) => t?.creator?.id === user.id && t?.status === 'COMPLETED').length,
+          tasksInProgress: tasks.filter((t: any) => t?.creator?.id === user.id && t?.status === 'IN_PROGRESS').length,
+          tasksTodo: tasks.filter((t: any) => t?.creator?.id === user.id && t?.status === 'TODO').length
         }
 
         setStats(userStats)

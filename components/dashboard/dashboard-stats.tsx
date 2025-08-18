@@ -48,12 +48,26 @@ export function DashboardStats() {
           return new Date() > new Date(task.dueDate)
         }).length
 
+        // Calculate assigned tasks as tasks created by user with IN_PROGRESS status
+        const assignedTasks = tasks.filter((task: any) => 
+          task.status === 'IN_PROGRESS' && 
+          task.creator?.id === user.id
+        ).length
+
+        console.log('Dashboard Stats Debug:', {
+          user: { id: user.id, email: user.email },
+          tasksCount: tasks.length,
+          inProgressTasks: tasks.filter((task: any) => task.status === 'IN_PROGRESS'),
+          assignedTasks,
+          tasksSample: tasks.slice(0, 2) // Show first 2 tasks for debugging
+        })
+
         setStats({
           totalProjects: projects.length,
           totalTasks: tasks.length,
           completedTasks,
           overdueTasks,
-          assignedTasks: user.assignedTaskCount || 0,
+          assignedTasks,
         })
       }
     } catch (error) {
@@ -104,7 +118,7 @@ export function DashboardStats() {
   if (isLoading) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {Array.from({ length: 4 }).map((_, i) => (
+        {Array.from({ length: 5 }).map((_, i) => (
           <Card key={i}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Loading...</CardTitle>
@@ -120,7 +134,7 @@ export function DashboardStats() {
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
       {statsData.map((stat) => (
         <Card key={stat.title}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">

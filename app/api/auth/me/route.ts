@@ -68,11 +68,14 @@ export async function GET() {
               project: true,
             },
           },
-                  assignedTasks: {
-          include: {
-            project: true,
+          assignedTasks: {
+            where: {
+              status: 'IN_PROGRESS',
+            },
+            include: {
+              project: true,
+            },
           },
-        },
         },
       })
     }

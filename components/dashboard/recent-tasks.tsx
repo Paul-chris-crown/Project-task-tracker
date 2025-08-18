@@ -31,6 +31,11 @@ export function RecentTasks() {
         const user = await response.json()
         // Get the 5 most recent assigned tasks (in progress)
         const assignedTasks = user.assignedTasks || []
+        console.log('Recent Tasks Debug:', {
+          user: { id: user.id, email: user.email },
+          assignedTasksCount: assignedTasks.length,
+          assignedTasks: assignedTasks
+        })
         const recentTasks = assignedTasks
           .sort((a: Task, b: Task) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
           .slice(0, 5)
@@ -73,8 +78,8 @@ export function RecentTasks() {
     return (
       <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
         <CardHeader>
-          <CardTitle className="text-gray-900 dark:text-white">Recent Tasks</CardTitle>
-          <CardDescription className="text-gray-600 dark:text-gray-300">Your latest tasks and their current status</CardDescription>
+          <CardTitle className="text-gray-900 dark:text-white">My Assigned Tasks</CardTitle>
+          <CardDescription className="text-gray-600 dark:text-gray-300">Your tasks currently in progress</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
@@ -103,8 +108,8 @@ export function RecentTasks() {
     return (
       <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
         <CardHeader>
-          <CardTitle className="text-gray-900 dark:text-white">Recent Tasks</CardTitle>
-          <CardDescription className="text-gray-600 dark:text-gray-300">Your latest tasks and their current status</CardDescription>
+          <CardTitle className="text-gray-900 dark:text-white">My Assigned Tasks</CardTitle>
+          <CardDescription className="text-gray-600 dark:text-gray-300">Your tasks currently in progress</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="text-center py-8 text-gray-500 dark:text-gray-400">
